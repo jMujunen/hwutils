@@ -35,6 +35,7 @@ def main():
                 gpu_data.power,
                 gpu_data.voltage,
                 gpu_data.core_usage,
+                gpu_data.memory_usage,
                 ram_data.percent_used,
                 sys_data.temp,
                 network_data.ping()
