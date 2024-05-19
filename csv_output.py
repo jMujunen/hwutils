@@ -44,10 +44,9 @@ def main():
                 f.write(line + '\n')
             sleep(POLL_INTERVAL)
         except KeyboardInterrupt:
-            sys.exit(0)
+            break
         except Exception as e:
-            print(e)
-            sys.exit(4)
+            return e
 
 if __name__ == '__main__':
     try:        
@@ -56,7 +55,8 @@ if __name__ == '__main__':
             os.chmod(OUTPUT_FILE, 0o644)
         main()
     except PermissionError as e:
-        sys.exit(5)
+        print(e)
+        sys.exit(1)
     except Exception as e:
         print(e)
         sys.exit(1)
