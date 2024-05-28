@@ -6,7 +6,7 @@ import time
 import configparser
 import os
 
-from hwdata.GPU import GpuInfo
+from hwdata.GPU import GpuData
 from hwdata.CPU import CpuData
 from hwdata.FAN import Fan
 from hwdata.SYS import SystemTemp
@@ -14,7 +14,7 @@ from hwdata.SYS import SystemTemp
 
 def main(POLL_INTERVAL=1, MAX_SAMPLES=60):
     for i in range(MAX_SAMPLES):
-        print(GpuInfo(), end='\n\n')
+        print(GpuData(), end='\n\n')
         time.sleep(POLL_INTERVAL)
 
 def create_config():
