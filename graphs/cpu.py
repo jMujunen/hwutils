@@ -2,8 +2,6 @@
 
 # gpu.py - Graph various cpu values on a single chart
 
-import graphs
-
 import sys
 from random import randint
 
