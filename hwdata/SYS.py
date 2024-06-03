@@ -14,7 +14,7 @@ class SystemTemp:
     def temp(self):
         # Get the temperature data from the sensors using a subprocess
         command_output = subprocess.run(
-            "sensors | grep -A 3 iwlwifi_1-virtual-0 | grep -oP '\\d{2}'",
+            "sensors | grep 'Sensor 2' | awk  '{print $3}'",
             shell=True,
             capture_output=True,
             text=True
