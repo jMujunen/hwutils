@@ -13,7 +13,7 @@ from hwdata import CPU, GPU, NET, SYS
 POLL_INTERVAL = 0.5
 OUTPUT_FILE = "/tmp/hwinfo.csv"
 
-HEADER = "datetime, cpu_voltage, cpu_temp, cpu_max_clock, cpu_avg_clock, gpu_temp, gpu_power, gpu_voltage, gpu_usage, ram_usage, system_temp, ping"
+HEADER = "datetime, cpu_voltage, cpu_temp, cpu_max_clock, cpu_avg_clock, gpu_temp, gpu_power, gpu_core_usage, gpu_voltage, gpu_memory_usage, ram_usage, system_temp, ping"
 
 cpu_data = CPU.CpuData()
 gpu_data = GPU.GpuData()
@@ -25,7 +25,7 @@ def main():
     while True:
         try:
             timestamp = str(datetime.datetime.now())[:-7]
-            line = "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}".format(
+            line = "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}".format(
                 timestamp,
                 cpu_data.voltage,
                 cpu_data.max_temp,
@@ -33,8 +33,8 @@ def main():
                 cpu_data.average_clock,
                 gpu_data.temp,
                 gpu_data.power,
-                gpu_data.voltage,
                 gpu_data.core_usage,
+                gpu_data.voltage,
                 gpu_data.memory_usage,
                 ram_data.percent_used,
                 sys_data.temp,

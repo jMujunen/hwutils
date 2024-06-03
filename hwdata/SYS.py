@@ -45,13 +45,12 @@ class RAM:
         return psutil.virtual_memory()
     @property
     def percent_used(self):
-        return psutil.virtual_memory().percent
+        return int(psutil.virtual_memory().percent)
 
     def __str__(self):
         return(
             f'RAM: {self.percent_used}%'
         )
-
 
 class Misc:
     def __init__(self):
