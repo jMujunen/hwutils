@@ -17,9 +17,10 @@ HEADER = "datetime, cpu_voltage, cpu_temp, cpu_max_clock, cpu_avg_clock, gpu_tem
 
 cpu_data = CPU.CpuData()
 gpu_data = GPU.GpuData()
-network_data = NET.NetworkInterface()
-sys_data = SYS.SystemTemp()
+network_data = NET.Interface()
+sys_data = SYS.Temp()
 ram_data = SYS.RAM()
+
 
 def main():
     while True:
@@ -38,20 +39,21 @@ def main():
                 gpu_data.memory_usage,
                 ram_data.percent_used,
                 sys_data.temp,
-                network_data.ping()
+                network_data.ping(),
             )
-            with open(OUTPUT_FILE, 'a') as f:
-                f.write(line + '\n')
+            with open(OUTPUT_FILE, "a") as f:
+                f.write(line + "\n")
             sleep(POLL_INTERVAL)
         except KeyboardInterrupt:
             break
         except Exception as e:
             return e
 
-if __name__ == '__main__':
-    try:        
-        with open(OUTPUT_FILE, 'w') as f:
-            f.write(HEADER + '\n')
+
+if __name__ == "__main__":
+    try:
+        with open(OUTPUT_FILE, "w") as f:
+            f.write(HEADER + "\n")
             os.chmod(OUTPUT_FILE, 0o644)
         main()
     except PermissionError as e:
@@ -60,4 +62,3 @@ if __name__ == '__main__':
     except Exception as e:
         print(e)
         sys.exit(1)
-
