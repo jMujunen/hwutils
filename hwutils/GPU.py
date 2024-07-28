@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
-import subprocess
 import re
-
+import subprocess
 from dataclasses import dataclass
 
 
@@ -405,7 +404,7 @@ class GpuData:
                     else:
                         # Dont assign a unit to the timestamp, so we subtract one from the unit index.
                         offset = 1
-                except IndexError as e:
+                except IndexError:
                     pass
             # Join back together with commas and add the header back in.
             template = f'{header_}\n{", ".join(values)}' if header else ", ".join(values)

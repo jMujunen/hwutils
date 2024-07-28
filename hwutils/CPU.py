@@ -253,7 +253,7 @@ class CpuData(Sensor):
                     else:
                         # Dont assign a unit to the timestamp, so subtract one from the units index.
                         offset = 1
-                except IndexError as e:
+                except IndexError:
                     pass
             # Join back together with commas and add the header back in.
             template = f'{header_}\n{", ".join(values)}' if header else ", ".join(values)

@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """__main__.py - Command-line interface for HWINFO"""
 
-import sys
 import argparse
 from . import __init__ as hwdata_init
 from .CPU import CpuData
 from .GPU import GpuData
 from .DISK import Disk
-from .SYS import Temp, RAM, Misc
+from .SYS import Temp, RAM
 from .NET import Interface
 
 

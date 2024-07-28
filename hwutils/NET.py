@@ -2,8 +2,9 @@
 
 # Network.py - Query network information for HWINFO
 
-import psutil
 import subprocess
+
+import psutil
 
 from .Sensor import Sensor
 
@@ -41,7 +42,7 @@ class Interface(Sensor):
                     conn.laddr[0].strip("::ffff:")
                     conn.raddr[0].strip("::ffff:")
                     outgoing_connections.append(conn)
-            except Exception as e:
+            except Exception:
                 pass
             try:
                 if conn.status == "LISTEN":
@@ -52,7 +53,7 @@ class Interface(Sensor):
                     pass
                 else:
                     other_connections.append(conn)
-            except Exception as e:
+            except Exception:
                 pass
 
         return (
@@ -63,7 +64,7 @@ class Interface(Sensor):
         )
 
     def byte_io(self, destination):
-        if not self.interface in psutil.net_connections(pernic=True):
+        if self.interface not in psutil.net_connections(pernic=True):
             return 1
         bytes_sent = psutil.net_io_counters().bytes_sent
         bytes_recv = psutil.net_io_counters().bytes_recv
@@ -122,9 +123,7 @@ class Interface(Sensor):
 
     @property
     def hosts(self):
-        hosts = subprocess.run(
-            'nmap -T4 -sn 10.0.0.0/24 | grep "Nmap"',
-        )
+        hosts = subprocess.run('nmap -T4 -sn 10.0.0.0/24 | grep "Nmap"')
 
     def __str__(self):
         return str(
@@ -221,7 +220,7 @@ if __name__ == "__main__":
                 listen_addr.append(f"remote: {k.raddr[0]}")
             if k.laddr[0] not in listen_addr:
                 listen_addr.append(f"local: {k.laddr[0]}")
-        except Exception as e:
+        except Exception:
             pass
 
     for k in net.connections()[3]:
@@ -251,4 +250,5 @@ if __name__ == "__main__":
         for k in outgoing_addr:
             pprint.pprint(k)
     except Exception as e:
+        print(e)
         print(e)
