@@ -3,13 +3,4 @@
 # __init__.py - Initializes the graphs package
 
 
-__all__ = [
-    'fan',
-    'temp'
-]
-
-
-
-
-
-
+__all__ = ["fan", "temp"]

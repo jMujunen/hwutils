@@ -69,7 +69,7 @@ def main_menu():
         cputemp_percent = round(cpu.average_temp / 90 * 100)
         cpu_temp_element = cpu_temp_box.draw_rectangle(cputemp_percent)
         cpu_temp_used = cpu_temp_box.draw_text(f"{(cpu.average_temp)}°C", font="Any 40", modifier=2)
-        cpu_temp_footer = cpu_temp_box.draw_text("CPU")
+        cpu_temp_box.draw_text("CPU")
 
         wifi = NetworkInterface(interface="wlan0")
         ping_element = ping_box.draw_rectangle(wifi.ping(destination="1.1.1.1"))
@@ -97,7 +97,7 @@ def main_menu():
         gpu = GpuInfo()
         gpu_useage_element = gpu_usage_box.draw_rectangle(gpu.core_usage)
         gpu_usage_text_percent = gpu_usage_box.draw_percentage_text(gpu.core_usage)
-        gpu_text_used = gpu_usage_box.draw_text(f"{gpu.name}")
+        gpu_usage_box.draw_text(f"{gpu.name}")
 
         gpupower_percent = round(gpu.power / 300 * 100)
         gpu_power_element = gpu_power_box.draw_rectangle(gpupower_percent)
@@ -195,7 +195,7 @@ class InterfaceBoxes(sg.Graph):
         return int(GSIZE[1] * float(value) / 100)
 
     def kill(self, **kwargs):
-        for arg, value in kwargs.items():
+        for _arg, value in kwargs.items():
             self.delete_figure(value)
 
 
