@@ -24,7 +24,7 @@ class Temp(Sensor):
             "sensors | grep 'Sensor 2' | awk  '{print $3}'",
             shell=True,
             capture_output=True,
-            text=True,
+            text=True, check=False,
         ).stdout.strip()
 
         # Extract the first matching temperature value
@@ -68,7 +68,7 @@ class Misc(Sensor):
     def get_uptime(self):
         # Get the uptime data from the sensors using a subprocess
         command_output = subprocess.run(
-            "uptime -p", shell=True, capture_output=True, text=True
+            "uptime -p", shell=True, capture_output=True, text=True, check=False
         ).stdout.strip()
 
         # Extract the first matching uptime value
@@ -86,7 +86,7 @@ class Misc(Sensor):
         for user in users:
             names.append(user.name)
             terminals.append(user.terminal)
-        return list(zip(names, terminals))
+        return list(zip(names, terminals, strict=False))
 
 
 # Example usage

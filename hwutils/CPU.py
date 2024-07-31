@@ -71,7 +71,7 @@ class CpuData(Sensor):
         """
         temp_dict = {}
         cpu_temperatures = subprocess.run(
-            "sensors | grep Core", shell=True, capture_output=True, text=True
+            "sensors | grep Core", shell=True, capture_output=True, text=True, check=False
         ).stdout.strip()
 
         matches = re.findall(self.cpu_temp_regex, cpu_temperatures)
@@ -88,7 +88,7 @@ class CpuData(Sensor):
         The voltage is rounded to three decimal places.
         """
         cpu_voltage_subproccess = subprocess.run(
-            ["echo $(sensors | grep VIN3)"], shell=True, stdout=subprocess.PIPE
+            ["echo $(sensors | grep VIN3)"], shell=True, stdout=subprocess.PIPE, check=False
         ).stdout.decode("utf-8")
         raw_value = self.cpu_voltage_regex.search(cpu_voltage_subproccess).group(1)
         cpu_voltage = raw_value.strip()
@@ -178,7 +178,7 @@ class CpuData(Sensor):
 
     def cpu_name(self, short=False):
         output = subprocess.run(
-            'lscpu | grep "Model name"', shell=True, capture_output=True, text=True
+            'lscpu | grep "Model name"', shell=True, capture_output=True, text=True, check=False
         )
         stderr = output.stderr.strip()
         stdout = output.stdout.strip()

@@ -80,7 +80,7 @@ class Interface(Sensor):
             f'ping -c 1 {destination} | sed -u "s/^.*time=//g; s/ ms//g; s/^PING.*//g; s/^---.*//g; s/^.*packets.*//g; s/^rtt.*//g"',
             shell=True,
             capture_output=True,
-            text=True,
+            text=True, check=False,
         )
         if ping.stderr:
             return ping.stderr.strip()
@@ -123,7 +123,7 @@ class Interface(Sensor):
 
     @property
     def hosts(self):
-        hosts = subprocess.run('nmap -T4 -sn 10.0.0.0/24 | grep "Nmap"')
+        subprocess.run('nmap -T4 -sn 10.0.0.0/24 | grep "Nmap"', check=False)
 
     def __str__(self):
         return str(

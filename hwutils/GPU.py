@@ -79,7 +79,7 @@ class GpuData:
             "nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader",
             shell=True,
             capture_output=True,
-            text=True,
+            text=True, check=False,
         ).stdout.strip()
         return core_temp
 
@@ -98,7 +98,7 @@ class GpuData:
             "nvidia-smi --query-gpu=temperature.memory --format=csv,noheader",
             shell=True,
             capture_output=True,
-            text=True,
+            text=True, check=False,
         ).stdout.strip()
         return memory_temp
 
@@ -118,7 +118,7 @@ class GpuData:
                 "nvidia-smi  --query-gpu=clocks.current.graphics  --format=csv,noheader",
                 shell=True,
                 capture_output=True,
-                text=True,
+                text=True, check=False,
             )
             .stdout.replace("MHz", "")
             .strip()
@@ -141,7 +141,7 @@ class GpuData:
                 "nvidia-smi  --query-gpu=clocks.max.graphics  --format=csv,noheader",
                 shell=True,
                 capture_output=True,
-                text=True,
+                text=True, check=False,
             )
             .stdout.replace("MHz", "")
             .strip()
@@ -164,7 +164,7 @@ class GpuData:
                 "nvidia-smi  --query-gpu=clocks.current.memory  --format=csv,noheader",
                 shell=True,
                 capture_output=True,
-                text=True,
+                text=True, check=False,
             )
             .stdout.replace("MHz", "")
             .strip()
@@ -187,7 +187,7 @@ class GpuData:
                 "nvidia-smi  --query-gpu=clocks.max.memory  --format=csv,noheader",
                 shell=True,
                 capture_output=True,
-                text=True,
+                text=True, check=False,
             )
             .stdout.replace("MHz", "")
             .strip()
@@ -209,7 +209,7 @@ class GpuData:
                 "nvidia-smi  --query-gpu=utilization.memory  --format=csv,noheader",
                 shell=True,
                 capture_output=True,
-                text=True,
+                text=True, check=False,
             )
             .stdout.replace("%", "")
             .strip()
@@ -231,7 +231,7 @@ class GpuData:
             'nvidia-smi  -q  --display=Voltage  |  grep -o -P "Graphics.*"',
             shell=True,
             capture_output=True,
-            text=True,
+            text=True, check=False,
         ).stdout.strip()
         matches = "  ".join(voltage_regex.findall(voltage_subprocess))
         volts = round(float(matches) / 1000, 2)
@@ -253,7 +253,7 @@ class GpuData:
                 "nvidia-smi  --query-gpu=power.draw  --format=csv,noheader",
                 shell=True,
                 capture_output=True,
-                text=True,
+                text=True, check=False,
             )
             .stdout.replace("W", "")
             .strip()
@@ -275,7 +275,7 @@ class GpuData:
                 "nvidia-smi  --query-gpu=utilization.gpu  --format=csv,noheader",
                 shell=True,
                 capture_output=True,
-                text=True,
+                text=True, check=False,
             )
             .stdout.replace("%", "")
             .strip()
@@ -298,7 +298,7 @@ class GpuData:
             "nvidia-smi  --query-gpu=name  --format=csv,noheader",
             shell=True,
             capture_output=True,
-            text=True,
+            text=True, check=False,
         ).stdout.strip()
         matches = name_regex.findall(subout)
         if short:
@@ -321,7 +321,7 @@ class GpuData:
             "nvidia-smi  --query-gpu=timestamp  --format=csv,noheader",
             shell=True,
             capture_output=True,
-            text=True,
+            text=True, check=False,
         ).stdout.strip()
         return timestamp
 
@@ -338,7 +338,7 @@ class GpuData:
             "nvidia-smi --query-gpu=fan.speed --format=csv,noheader",
             shell=True,
             capture_output=True,
-            text=True,
+            text=True, check=False,
         ).stdout.strip()
         return fan_speed.replace("%", "").strip()
 
@@ -400,7 +400,7 @@ class GpuData:
             for i, value in enumerate(values):
                 try:
                     if not DATETIME_REGEX.match(value):
-                        values[i] = f"{value}{unit_definitions[i-offset]}"
+                        values[i] = f"{value}{unit_definitions[i - offset]}"
                     else:
                         # Dont assign a unit to the timestamp, so we subtract one from the unit index.
                         offset = 1

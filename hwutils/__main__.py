@@ -15,10 +15,10 @@ def main():
     subparsers = parser.add_subparsers(dest="command")
 
     # CPU command
-    cpu_parser = subparsers.add_parser("cpu", help="Display CPU information.")
+    subparsers.add_parser("cpu", help="Display CPU information.")
 
     # GPU command
-    gpu_parser = subparsers.add_parser("gpu", help="Display GPU information.")
+    subparsers.add_parser("gpu", help="Display GPU information.")
 
     # Disk command
     disk_parser = subparsers.add_parser("disk", help="Display disk usage information.")
@@ -38,7 +38,7 @@ def main():
     )
 
     # Temperature command
-    temp_parser = subparsers.add_parser("temp", help="Display temperature information.")
+    subparsers.add_parser("temp", help="Display temperature information.")
 
     # Parse arguments and execute commands
     args = parser.parse_args()
@@ -63,8 +63,8 @@ def main():
 
         elif args.command == "ram":
             ram = RAM()
-            print(f"Total RAM: {ram.total / (1024 ** 3)} GB")
-            print(f"Available RAM: {ram.available / (1024 ** 3)} GB")
+            print(f"Total RAM: {ram.total / (1024**3)} GB")
+            print(f"Available RAM: {ram.available / (1024**3)} GB")
 
         elif args.command == "net":
             net = Interface(args.interface)

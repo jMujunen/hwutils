@@ -85,7 +85,7 @@ class Fan(Sensor):
         """
         # Get the fan speed data from the sensors using a subprocess
         command_output = subprocess.run(
-            f"sensors | grep {self.fan_id}", shell=True, capture_output=True, text=True
+            f"sensors | grep {self.fan_id}", shell=True, capture_output=True, text=True, check=False
         ).stdout.strip()
 
         # Find all matches in the text {'fan1': '555', 'fan2': '1025'}
@@ -93,7 +93,7 @@ class Fan(Sensor):
 
         # Process the matches into dictionary format
         speed = matches[0][1]
-        name = matches[0][0]
+        matches[0][0]
         return speed
         """
         # Return the dictionary if non-empty
