@@ -9,7 +9,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow
 from PySide6.QtCore import QTimer
 import pyqtgraph as pg
 
-from hwdata.CPU import CpuData
+from hwutils import CpuData
 
 CPUDATA = CpuData()
 VOLTAGEMODIFER = 1000

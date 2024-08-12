@@ -12,13 +12,11 @@ import pyqtgraph as pg
 
 from RandomRgb import generate_rgb
 
-from hwdata.CPU import CpuData
-from hwdata.GPU import GpuData
-from hwdata.SYS import SystemTemp
+from hwutils import CpuData, GpuData, Temp
 
 from ExecutionTimer import ExecutionTimer
 
-TEMPS = [CpuData(), GpuData(), SystemTemp()]
+TEMPS = [CpuData(), GpuData(), Temp()]
 #       CPU,          GPU,           SYS
 #       Magenta,   Green,        Orange
 COLORS = ["#880cbc", "#6fb126", "#aa9001"]
@@ -70,7 +68,7 @@ class MainWindow(QMainWindow):
 
     @property
     def new_value(self):
-        new_temps = [CpuData(), GpuData(), SystemTemp()]
+        new_temps = [CpuData(), GpuData(), Temp()]
         temps = []
         for temp in new_temps:
             temps.append(int(temp.temp))

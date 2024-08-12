@@ -12,9 +12,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow
 from PySide6.QtCore import QTimer
 import pyqtgraph as pg
 
-from hwdata.CPU import CpuData
-from hwdata.FAN import Fan
-from hwdata.GPU import GpuData
+from hwutils import CpuData, Fan, GpuData
 
 
 FANS = [
@@ -110,9 +108,9 @@ class MainWindow(QMainWindow):
 
 
 def generate_rgb():
-    red = random.randint(0, 255)
-    green = random.randint(0, 255)
-    blue = random.randint(0, 255)
+    red = randint(0, 255)
+    green = randint(0, 255)
+    blue = randint(0, 255)
     return (red, green, blue)
 
 

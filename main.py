@@ -6,10 +6,8 @@ import time
 import configparser
 import os
 
-from hwdata.GPU import GpuData
-from hwdata.CPU import CpuData
-from hwdata.FAN import Fan
-from hwdata.SYS import SystemTemp
+from hwutils import GpuData, CpuData, Fan, Temp
+
 
 
 def main(POLL_INTERVAL=1, MAX_SAMPLES=60):
