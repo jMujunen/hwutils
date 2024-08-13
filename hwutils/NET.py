@@ -80,7 +80,8 @@ class Interface(Sensor):
             f'ping -c 1 {destination} | sed -u "s/^.*time=//g; s/ ms//g; s/^PING.*//g; s/^---.*//g; s/^.*packets.*//g; s/^rtt.*//g"',
             shell=True,
             capture_output=True,
-            text=True, check=False,
+            text=True,
+            check=False,
         )
         if ping.stderr:
             return ping.stderr.strip()

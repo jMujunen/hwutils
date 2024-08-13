@@ -47,7 +47,7 @@ class CpuData(Sensor):
             are clock frequencies (floats).
         """
         clock_dict = {}
-        with open("/proc/cpuinfo", "r", encoding="utf-8") as f:
+        with open("/proc/cpuinfo", encoding="utf-8") as f:
             raw_output = f.read()
 
         matches = re.findall(self.clock_speed_regex, raw_output)

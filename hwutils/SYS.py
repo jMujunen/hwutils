@@ -1,5 +1,6 @@
-import subprocess
 import re
+import subprocess
+
 import psutil
 
 from .Sensor import Sensor
@@ -24,7 +25,8 @@ class Temp(Sensor):
             "sensors | grep 'Sensor 2' | awk  '{print $3}'",
             shell=True,
             capture_output=True,
-            text=True, check=False,
+            text=True,
+            check=False,
         ).stdout.strip()
 
         # Extract the first matching temperature value
@@ -57,8 +59,20 @@ class Ram(Sensor):
     def percent_used(self) -> int:
         return int(psutil.virtual_memory().percent)
 
+    @property
+    def available(self) -> int:
+        return int(psutil.virtual_memory().available)
+
+    @property
+    def used(self) -> int:
+        return int(psutil.virtual_memory().used)
+
+    @property
+    def total(self) -> int:
+        return int(psutil.virtual_memory().total)
+
     def __str__(self) -> str:
-        return f"RAM: {self.percent_used}%"
+        return f"Ram: {self.percent_used}%"
 
 
 class Misc(Sensor):

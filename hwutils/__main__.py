@@ -2,12 +2,12 @@
 """__main__.py - Command-line interface for HWINFO"""
 
 import argparse
-from . import __init__ as hwdata_init
+
 from .CPU import CpuData
-from .GPU import GpuData
 from .DISK import Disk
-from .SYS import Temp, RAM
+from .GPU import GpuData
 from .NET import Interface
+from .SYS import Ram, Temp
 
 
 def main():
@@ -36,6 +36,7 @@ def main():
     net_parser.add_argument(
         "--interface", type=str, default="wlan0", help="Specify the network interface to query."
     )
+    # DEBUG:
 
     # Temperature command
     subparsers.add_parser("temp", help="Display temperature information.")
@@ -62,7 +63,7 @@ def main():
             print(f"{disk.friendly_name or args.mountpoint}: {disk.percent_used()}% used")
 
         elif args.command == "ram":
-            ram = RAM()
+            ram = Ram()
             print(f"Total RAM: {ram.total / (1024**3)} GB")
             print(f"Available RAM: {ram.available / (1024**3)} GB")
 
