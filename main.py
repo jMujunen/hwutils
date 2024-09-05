@@ -9,7 +9,6 @@ import os
 from hwutils import GpuData, CpuData, Fan, Temp
 
 
-
 def main(POLL_INTERVAL=1, MAX_SAMPLES=60):
     for _i in range(MAX_SAMPLES):
         print(GpuData(), end="\n\n")

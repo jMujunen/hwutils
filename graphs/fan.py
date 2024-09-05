@@ -33,7 +33,7 @@ COLORS = ["#880cbc", "#b12680", "#1B8B84", "#0ca0bc", "#0c82bc", "#a5a500", "#6f
 
 class MainWindow(QMainWindow):
     def __init__(self):
-        super(MainWindow, self).__init__()
+        super().__init__()
 
         self.graphWidget = pg.PlotWidget()
         self.setCentralWidget(self.graphWidget)
