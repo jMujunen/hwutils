@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "hwutils"
+version = "0.1.0"
+description = ""
+authors = ["jMujunen <jMujunen@github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+psutil-extra = "^0.2.0"
+nvidia-ml-py = "^12.555.43"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
