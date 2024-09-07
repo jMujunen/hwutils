@@ -3,19 +3,24 @@
 # TODO:
 # *  - [x] Add suppport for specifying which CPU to query
 
-import subprocess
-import re
 import datetime
+import re
+import subprocess
 
 from .Sensor import Sensor
 
+clock_speed_regex = re.compile(r"(cpu MHz)\s+:\s+([\d.]+)")
+cpu_voltage_regex = re.compile(r"([^+]\d{1,3}\.\d{2,})")
+cpu_temp_regex = re.compile(r"(Core \d+).*(\d\d\.\d).*\(high.*\)")
+name_regex = re.compile(r"Model name:\s+(.*)")
+
 
 class CpuData(Sensor):
+    """The object contains information about the CPU, including its clock speed,
+    voltage, temperature and name."""
+
     def __init__(self):
-        """
-        Initializes an instance of `CpuData`.
-        The object contains information about the CPU, including its clock speed,
-        voltage, temperature and name.
+        """Initialize an instance of `CpuData`.
 
         Returns
         ------
@@ -25,32 +30,40 @@ class CpuData(Sensor):
         # Regex patterns for parsing output from 'lscpu' and 'sensors' commands
         # Regex patterns for parsing output from
         # 'lscpu' and 'sensors' commands
-        self.clock_speed_regex = re.compile(r"(cpu MHz)\s+:\s+([\d.]+)")
-        self.cpu_voltage_regex = re.compile(r"([^+]\d{1,3}\.\d{2,})")
-        self.cpu_temp_regex = re.compile(r"(Core \d+).*(\d\d\.\d).*\(high.*\)")
-        self.name_regex = re.compile(r"Model name:\s+(.*)")
 
         # Initialization of properties for CPU data
         self.name = self.cpu_name(short=True)
         self.temp = self.average_temp
         super().__init__("cpu")
 
-    def query_cpu_clocks(self):
-        """
-        Queries the clock speeds of all cores and returns them in a dictionary.
+    def update(self):
+        """Read values from /proc/cpunfo and parse accordingly."""
+        with open("/proc/cpuinfo", encoding="utf-8") as f:
+            content = f.readlines()
+        sensors = subprocess.check_output("sensors").decode().split("\n")
+
+        # Parse CPU clocks
+        cpuinfo = [tuple(line.split(":")) for line in content if ":" in line]
+        clocks = enumerate((value.strip()) for key, value in cpuinfo if "cpu MHz" in key)
+
+        # Parse CPU temps
+        sensorinfo = [tuple(line.split(":")) for line in sensors if ":" in line]
+        temps = enumerate(value.split()[0] for key, value in sensorinfo if "Core" in key)
+
+        # return zip(*zip(clocks, temps, strict=False), strict=False)
+
+    def query_cpu_clocks(self) -> dict[str, str]:
+        """Query the clock speeds of all cores.
+
         The keys are core numbers starting from 1 and the values
         are their corresponding clock frequencies.
 
-        Returns
-        ------
-            dict: A dictionary where keys are core numbers (ints) and values
-            are clock frequencies (floats).
         """
         clock_dict = {}
         with open("/proc/cpuinfo", encoding="utf-8") as f:
             raw_output = f.read()
 
-        matches = re.findall(self.clock_speed_regex, raw_output)
+        matches = re.findall(clock_speed_regex, raw_output)
         count = 1
         for match in matches:
             clock_dict[count] = match[1]
@@ -59,8 +72,8 @@ class CpuData(Sensor):
         return clock_dict
 
     def query_cpu_temp(self):
-        """
-        Queries the temperature of all cores and returns them in a dictionary.
+        """Query the temperature of all cores.
+
         The keys are core numbers starting from 1 and the values
         are their corresponding temperatures.
 
@@ -74,7 +87,7 @@ class CpuData(Sensor):
             "sensors | grep Core", shell=True, capture_output=True, text=True, check=False
         ).stdout.strip()
 
-        matches = re.findall(self.cpu_temp_regex, cpu_temperatures)
+        matches = re.findall(cpu_temp_regex, cpu_temperatures)
         count = 1
         for match in matches:
             temp_dict[count] = match[1]
@@ -90,16 +103,15 @@ class CpuData(Sensor):
         cpu_voltage_subproccess = subprocess.run(
             ["echo $(sensors | grep VIN3)"], shell=True, stdout=subprocess.PIPE, check=False
         ).stdout.decode("utf-8")
-        raw_value = self.cpu_voltage_regex.search(cpu_voltage_subproccess).group(1)
+        raw_value = cpu_voltage_regex.search(cpu_voltage_subproccess).group(1)
         cpu_voltage = raw_value.strip()
         if len(cpu_voltage) == 4:
             return round(float(cpu_voltage.strip()), 3)
-        elif len(cpu_voltage) == 6:
+        if len(cpu_voltage) == 6:
             return round((float(cpu_voltage) / 1000), 3)
-        else:
-            raise Exception(
-                "Error: Voltage not found (requires a 4 or 6 digit number eg 1.25v or 600.00mV)"
-            )
+        raise Exception(
+            "Error: Voltage not found (requires a 4 or 6 digit number eg 1.25v or 600.00mV)"
+        )
 
     def cpu_clocks_list(self):
         """
@@ -187,7 +199,7 @@ class CpuData(Sensor):
             raise Exception(stderr)
             return 1
 
-        matches = re.findall(self.name_regex, stdout)
+        matches = re.findall(name_regex, stdout)
         for match in matches:
             full_name = match
             short_name = match.split(" ")[-1]

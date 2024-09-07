@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""__main__.py - Command-line interface for HWINFO"""
+"""__main__.py - Command-line interface for HWINFO."""
 
 import argparse
 
@@ -45,18 +45,18 @@ def main():
     args = parser.parse_args()
 
     if hasattr(args, "command"):
-        hwdata_init()  # Ensure the package is initialized
+        # hwdata_init()  # Ensure the package is initialized
 
         if args.command == "cpu":
             cpu = CpuData()
             print(f"CPU Name: {cpu.name}")
-            print(f"Max Clock Speed: {cpu.max_clock()} MHz")
+            print(f"Max Clock Speed: {cpu.max_clock} MHz")
             print(f"Average Temperature: {cpu.average_temp}°C")
 
         elif args.command == "gpu":
             gpu = GpuData()
             print(f"GPU Name: {gpu.name}")
-            print(f"Temperature: {gpu.temp()}°C")
+            print(f"Temperature: {gpu.temp}°C")
 
         elif args.command == "disk":
             disk = Disk(args.mountpoint)
