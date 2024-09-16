@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Disk.py - Query disk information for HWINFO"""
+"""Disk.py - Query disk information for HWINFO."""
 
 import psutil
 

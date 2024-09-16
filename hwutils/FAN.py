@@ -105,6 +105,7 @@ class Fan(Sensor):
         print("Error: Fan speeds are all 0")
         return "Error: Fan speeds are all 0"
         """
+        return None
 
     @property
     def speed(self) -> int:

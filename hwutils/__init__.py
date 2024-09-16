@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""__init__.py - Initializes the hwdata package"""
+"""__init__.py - Initializes the hwutils package."""
 
-from .GPU import GpuData
 from .CPU import CpuData
-from .FAN import Fan
 from .DISK import Disk
-from .SYS import Temp, Ram, Misc
+from .FAN import Fan
+from .GPU import GpuData
 from .NET import Interface
-from .PROC import Proc
 
+# from .PROC import Proc
+from .Sensor import Sensor, SensorReading, SystemStats
+from .SYS import Misc, Ram, Temp
 
 __all__ = [
     "GpuData",
@@ -19,7 +20,11 @@ __all__ = [
     "Interface",
     "Disk",
     "Temp",
-    # 'Proc',
+    # "Proc",
+    "Sensor",
+    "SensorReading",
+    "SystemStats",
 ]
+
 
 # print(GpuData().__doc__)

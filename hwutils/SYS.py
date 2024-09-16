@@ -19,7 +19,7 @@ class Temp(Sensor):
 
     @property
     def temp(self):
-        """Get the temperature data from the sensors using a subprocess"""
+        """Get the temperature data from the sensors using a subprocess."""
 
         command_output = subprocess.run(
             "sensors | grep 'Sensor 2' | awk  '{print $3}'",
@@ -43,7 +43,7 @@ class Temp(Sensor):
         return f"{current_temp}°C"
 
     def __int__(self):
-        """Return current temperature as int"""
+        """Return current temperature as int."""
         current_temp = self.temp
         return int(current_temp) if int(current_temp) else 0
 

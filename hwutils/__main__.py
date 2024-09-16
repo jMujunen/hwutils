@@ -10,7 +10,7 @@ from .NET import Interface
 from .SYS import Ram, Temp
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Query hardware information.")
     subparsers = parser.add_subparsers(dest="command")
 

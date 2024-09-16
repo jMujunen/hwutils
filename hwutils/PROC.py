@@ -26,7 +26,7 @@ class Proc:
         self.t.start()
     """
 
-    def sigterm_wait(self):
+    def sigterm_wait(self) -> None:
         sleep(7)
         self.kill_all()
 

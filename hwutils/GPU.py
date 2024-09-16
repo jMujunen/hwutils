@@ -75,14 +75,13 @@ class GpuData:
             str: Current temperature of the GPU core in Celsius.
         """
         # temperature.gpu
-        core_temp = subprocess.run(
+        return subprocess.run(
             "nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader",
             shell=True,
             capture_output=True,
             text=True,
             check=False,
         ).stdout.strip()
-        return core_temp
 
     @property
     def memory_temp(self):
@@ -95,14 +94,13 @@ class GpuData:
             str: Current temperature of the GPU memory in Celsius.
         """
         # temperature.memory
-        memory_temp = subprocess.run(
+        return subprocess.run(
             "nvidia-smi --query-gpu=temperature.memory --format=csv,noheader",
             shell=True,
             capture_output=True,
             text=True,
             check=False,
         ).stdout.strip()
-        return memory_temp
 
     @property
     def core_clock(self):
@@ -115,7 +113,7 @@ class GpuData:
             str: Current graphics clock speed of the GPU in MHz.
         """
         # clocks.current.graphics
-        core_clock = (
+        return (
             subprocess.run(
                 "nvidia-smi  --query-gpu=clocks.current.graphics  --format=csv,noheader",
                 shell=True,
@@ -126,7 +124,6 @@ class GpuData:
             .stdout.replace("MHz", "")
             .strip()
         )
-        return core_clock
 
     @property
     def max_core_clock(self):
@@ -139,7 +136,7 @@ class GpuData:
             str: Maximum graphics clock speed of the GPU in MHz.
         """
         # clocks.max.graphics
-        max_core_clock = (
+        return (
             subprocess.run(
                 "nvidia-smi  --query-gpu=clocks.max.graphics  --format=csv,noheader",
                 shell=True,
@@ -150,7 +147,6 @@ class GpuData:
             .stdout.replace("MHz", "")
             .strip()
         )
-        return max_core_clock
 
     @property
     def memory_clock(self):
@@ -163,7 +159,7 @@ class GpuData:
             str: Current memory clock speed of the GPU in MHz.
         """
         # clocks.current.memory
-        memory_clock = (
+        return (
             subprocess.run(
                 "nvidia-smi  --query-gpu=clocks.current.memory  --format=csv,noheader",
                 shell=True,
@@ -174,7 +170,6 @@ class GpuData:
             .stdout.replace("MHz", "")
             .strip()
         )
-        return memory_clock
 
     @property
     def max_memory_clock(self):
@@ -187,7 +182,7 @@ class GpuData:
             str: Maximum memory clock speed of the GPU in MHz.
         """
         # clocks.max.memory
-        max_memory_clock = (
+        return (
             subprocess.run(
                 "nvidia-smi  --query-gpu=clocks.max.memory  --format=csv,noheader",
                 shell=True,
@@ -198,7 +193,6 @@ class GpuData:
             .stdout.replace("MHz", "")
             .strip()
         )
-        return max_memory_clock
 
     @property
     def memory_usage(self):
@@ -210,7 +204,7 @@ class GpuData:
 
             str: Current utilization of the GPU memory as a percentage.
         """
-        memory_usage = (
+        return (
             subprocess.run(
                 "nvidia-smi  --query-gpu=utilization.memory  --format=csv,noheader",
                 shell=True,
@@ -221,7 +215,6 @@ class GpuData:
             .stdout.replace("%", "")
             .strip()
         )
-        return memory_usage
 
     @property
     def voltage(self):
@@ -279,7 +272,7 @@ class GpuData:
 
             str: Current GPU utilization in percentage.
         """
-        core_usage = (
+        return (
             subprocess.run(
                 "nvidia-smi  --query-gpu=utilization.gpu  --format=csv,noheader",
                 shell=True,
@@ -290,7 +283,6 @@ class GpuData:
             .stdout.replace("%", "")
             .strip()
         )
-        return core_usage
 
     def gpu_name(self, short=False):
         """
@@ -321,21 +313,20 @@ class GpuData:
     @property
     def timestamp(self):
         """
-        Current timestamp
+        Current timestamp.
 
         Returns:
         -----------
 
             str : GPU timestamp in milliseconds since boot
         """
-        timestamp = subprocess.run(
+        return subprocess.run(
             "nvidia-smi  --query-gpu=timestamp  --format=csv,noheader",
             shell=True,
             capture_output=True,
             text=True,
             check=False,
         ).stdout.strip()
-        return timestamp
 
     @property
     def fan_speed(self):
@@ -422,7 +413,7 @@ class GpuData:
             # Join back together with commas and add the header back in.
             template = f'{header_}\n{", ".join(values)}' if header else ", ".join(values)
         # Format the template with the data from this instance of the class
-        formatted = template.format(
+        return template.format(
             temp=self.temp,
             voltage=self.voltage,
             core_clock=self.core_clock,
@@ -431,7 +422,6 @@ class GpuData:
             memory_clock=self.memory_clock,
             memory_usage=self.memory_usage,
         )
-        return formatted
 
     def __str__(self):
         """

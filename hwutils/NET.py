@@ -70,10 +70,9 @@ class Interface(Sensor):
         bytes_recv = psutil.net_io_counters().bytes_recv
         if destination == "sent":
             return bytes_sent
-        elif destination == "recv":
+        if destination == "recv":
             return bytes_recv
-        else:
-            return bytes_sent, bytes_recv
+        return bytes_sent, bytes_recv
 
     def ping(self, destination="1.1.1.1"):
         ping = subprocess.run(
@@ -91,7 +90,7 @@ class Interface(Sensor):
             return 0
 
     @property
-    def online(self):
+    def online(self) -> str:
         return "online" if psutil.net_if_stats()[self.interface].isup else "offline"
 
     """
@@ -123,7 +122,7 @@ class Interface(Sensor):
         """
 
     @property
-    def hosts(self):
+    def hosts(self) -> None:
         subprocess.run('nmap -T4 -sn 10.0.0.0/24 | grep "Nmap"', check=False)
 
     def __str__(self):
@@ -232,7 +231,6 @@ if __name__ == "__main__":
                 outgoing_addr.append(f"local: {k.laddr[0]}")
         except Exception as e:
             print(e, end=",")
-            pass
 
     import pprint
 

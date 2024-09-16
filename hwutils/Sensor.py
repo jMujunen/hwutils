@@ -1,3 +1,5 @@
+"""Contains the classes for sensor readings and system statistic."""
+
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -26,7 +28,7 @@ class SystemStats:
     gpu_memory_clock: SensorReading | None = None
     ping: SensorReading | None = None
 
-    def update(self):
+    def update(self) -> int:
         return 1
 
 

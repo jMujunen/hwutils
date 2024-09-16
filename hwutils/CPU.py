@@ -36,7 +36,7 @@ class CpuData(Sensor):
         self.temp = self.average_temp
         super().__init__("cpu")
 
-    def update(self):
+    def update(self) -> None:
         """Read values from /proc/cpunfo and parse accordingly."""
         with open("/proc/cpuinfo", encoding="utf-8") as f:
             content = f.readlines()
@@ -117,7 +117,7 @@ class CpuData(Sensor):
         """
         Queries the clock speeds of all cores and returns them in a list.
         The elements are core numbers starting from 1 and their corresponding
-        clock frequencies
+        clock frequencies.
 
         Returns
         ------
@@ -271,14 +271,13 @@ class CpuData(Sensor):
             template = f'{header_}\n{", ".join(values)}' if header else ", ".join(values)
 
         # Format the template with the data from this instance of the class.
-        formatted = template.format(
+        return template.format(
             voltage=self.voltage,
             average_clock=self.average_clock,
             max_clock=self.max_clock,
             average_temp=self.average_temp,
             max_temp=self.max_temp,
         )
-        return formatted
 
         # values = ''
         # header_line = ''
