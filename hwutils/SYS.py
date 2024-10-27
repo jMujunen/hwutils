@@ -38,7 +38,7 @@ class Temp(Sensor):
         return "Error: Temperature not found"
 
     def __str__(self):
-        """Returns a string representation of the temperature data."""
+        """Return a string representation of the temperature data."""
         current_temp = self.temp
         return f"{current_temp}°C"
 
@@ -46,6 +46,10 @@ class Temp(Sensor):
         """Return current temperature as int."""
         current_temp = self.temp
         return int(current_temp) if int(current_temp) else 0
+
+    def dict(self) -> dict[str, float]:
+        """Return a dictionary representation of the temperature data."""
+        return {"sys_temp": int(self.temp)}
 
 
 class Ram(Sensor):
@@ -73,6 +77,9 @@ class Ram(Sensor):
 
     def __str__(self) -> str:
         return f"Ram: {self.percent_used}%"
+
+    def dict(self) -> dict[str, int]:
+        return {"ram_usage": self.percent_used}
 
 
 class Misc(Sensor):

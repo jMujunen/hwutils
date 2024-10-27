@@ -6,13 +6,10 @@ import subprocess
 
 import psutil
 
-from .Sensor import Sensor
 
-
-class Interface(Sensor):
+class Interface:
     def __init__(self, interface="wlan0"):
         self.interface = interface
-        super().__init__("net")
 
     def addresses(self):
         for interface, values in psutil.net_if_addrs().items():
@@ -146,6 +143,10 @@ class Interface(Sensor):
     for proc in psutil.process_iter(['pid', 'name', 'username']):
         print(proc.info)
     """
+
+    def dict(self) -> dict[str, float]:
+        """Return value of ping."""
+        return {"ping": float(self.ping())}
 
 
 # Example

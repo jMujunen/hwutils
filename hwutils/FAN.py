@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
-import subprocess
 import re
+import subprocess
 
 from .Sensor import Sensor
+
 # TODO:
 # * Add support for renaming xfans (fan1 becomes CPU fan)
 
@@ -11,22 +12,21 @@ from .Sensor import Sensor
 class Fan(Sensor):
     """Class representing a single fan.
 
-    Attributes:
+    Attributes
     ----------
         name (str): The name of the fan
         fan_id (str): The id of the fan in lm-sensors output
 
-    Methods:
+    Methods
     --------
         speed() -> int: The current speed of the fan in RPMs.
         query_fans() -> str: The raw output of lm-sensors for this fan.
     """
 
     def __init__(self, fan_id: str, friendly_name: str | None = None):
-        """
-        Initialize the fan object with the given fan number.
+        """Initialize the fan object with the given fan number.
 
-        Parameters:
+        Parameters
         -----------
             fan_id (str): The name representing the fan in lm-sensors
                           For example: Fan('fan1') represents fan1 in
@@ -74,13 +74,12 @@ class Fan(Sensor):
         self._name = name
 
     def query_fans(self) -> dict:
-        """
-        Query the fan speed data from the sensors and return the fan data in a dictionary format.
+        """Query the fan speed data from the sensors and return the fan data in a dictionary format.
 
-        Parameters:
+        Parameters
             None
 
-        Returns:
+        Returns
             fan_data (dict): A dictionary containing the fan speed data
         """
         # Get the fan speed data from the sensors using a subprocess

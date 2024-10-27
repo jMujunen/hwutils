@@ -1,16 +1,16 @@
-#!/usr/bin/env python3
-
+import datetime
 import re
 import subprocess
 from dataclasses import dataclass
 
+digit_regex = re.compile(r"\d+\.?\d*")
+
 
 @dataclass
 class GpuData:
-    """
-    A class for querying GPU data using nvidia-smi tool.
+    """A class for querying GPU data using nvidia-smi tool.
 
-    Attributes:
+    Attributes
     ----------
         type (str): Type of the device, always 'GPU'.
         name (str): Name of the GPU.
@@ -42,7 +42,7 @@ class GpuData:
         timestamp : str
             The time when nvidia-smi was last run.
 
-    Methods:
+    Methods
         gpu_name(short=False) -> str:
             Return the name of the GPU. If short is True, return only model number.
 
@@ -50,178 +50,31 @@ class GpuData:
 
     def __init__(self):
         self.type = "GPU"
-        self.name = self.gpu_name(short=True)
+        print(self.update())
+
+    def update(self):
+        """Update all properties."""
+        cmd = "nvidia-smi --query-gpu=temperature.gpu,clocks.current.graphics,clocks.current.memory,utilization.memory,power.draw,utilization.gpu,fan.speed --format=csv,noheader"
+        output = subprocess.getoutput(cmd).splitlines()
+        output = [digit_regex.findall(line) for line in output]
+        (
+            self.gpu_temp,
+            self.gpu_core_clock,
+            self.gpu_memory_clock,
+            self.memory_usage,
+            self.power,
+            self.core_usage,
+            self.fan_speed,
+        ) = (round(float(x)) for x in output[0])
+        self.gpu_voltage = self.voltage
+        self.__dict__.update({"voltage": float(self.voltage)})
+        return self.__dict__
 
     @property
-    def temp(self):
-        """
-        Get current temperature of the GPU core.
+    def voltage(self) -> float:
+        """Get the voltage of the GPU in volts.
 
-        Returns:
-        -----------
-
-            str: Current temperature of the GPU core in Celsius.
-        """
-        return self.core_temp
-
-    @property
-    def core_temp(self):
-        """
-        Get current temperature of the GPU core.
-
-        Returns:
-        -----------
-
-            str: Current temperature of the GPU core in Celsius.
-        """
-        # temperature.gpu
-        return subprocess.run(
-            "nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader",
-            shell=True,
-            capture_output=True,
-            text=True,
-            check=False,
-        ).stdout.strip()
-
-    @property
-    def memory_temp(self):
-        """
-        Get current temperature of the GPU memory.
-
-        Returns:
-        -----------
-
-            str: Current temperature of the GPU memory in Celsius.
-        """
-        # temperature.memory
-        return subprocess.run(
-            "nvidia-smi --query-gpu=temperature.memory --format=csv,noheader",
-            shell=True,
-            capture_output=True,
-            text=True,
-            check=False,
-        ).stdout.strip()
-
-    @property
-    def core_clock(self):
-        """
-        Get current graphics clock speed of the GPU in MHz.
-
-        Returns:
-        -----------
-
-            str: Current graphics clock speed of the GPU in MHz.
-        """
-        # clocks.current.graphics
-        return (
-            subprocess.run(
-                "nvidia-smi  --query-gpu=clocks.current.graphics  --format=csv,noheader",
-                shell=True,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            .stdout.replace("MHz", "")
-            .strip()
-        )
-
-    @property
-    def max_core_clock(self):
-        """
-        Get maximum graphics clock speed of the GPU in MHz.
-
-        Returns:
-        -----------
-
-            str: Maximum graphics clock speed of the GPU in MHz.
-        """
-        # clocks.max.graphics
-        return (
-            subprocess.run(
-                "nvidia-smi  --query-gpu=clocks.max.graphics  --format=csv,noheader",
-                shell=True,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            .stdout.replace("MHz", "")
-            .strip()
-        )
-
-    @property
-    def memory_clock(self):
-        """
-        Get current memory clock speed of the GPU in MHz.
-
-        Returns:
-        -----------
-
-            str: Current memory clock speed of the GPU in MHz.
-        """
-        # clocks.current.memory
-        return (
-            subprocess.run(
-                "nvidia-smi  --query-gpu=clocks.current.memory  --format=csv,noheader",
-                shell=True,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            .stdout.replace("MHz", "")
-            .strip()
-        )
-
-    @property
-    def max_memory_clock(self):
-        """
-        Get maximum memory clock speed of the GPU in MHz.
-
-        Returns:
-        -----------
-
-            str: Maximum memory clock speed of the GPU in MHz.
-        """
-        # clocks.max.memory
-        return (
-            subprocess.run(
-                "nvidia-smi  --query-gpu=clocks.max.memory  --format=csv,noheader",
-                shell=True,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            .stdout.replace("MHz", "")
-            .strip()
-        )
-
-    @property
-    def memory_usage(self):
-        """
-        Get current utilization of the GPU memory as a percentage.
-
-        Returns:
-        -----------
-
-            str: Current utilization of the GPU memory as a percentage.
-        """
-        return (
-            subprocess.run(
-                "nvidia-smi  --query-gpu=utilization.memory  --format=csv,noheader",
-                shell=True,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            .stdout.replace("%", "")
-            .strip()
-        )
-
-    @property
-    def voltage(self):
-        """
-        Get the voltage of the GPU in volts.
-
-        Returns:
+        Returns
         -----------
 
             float: Voltage of the GPU in volts.
@@ -238,61 +91,8 @@ class GpuData:
         volts = round(float(matches) / 1000, 2)
         return float(volts)
 
-    @property
-    def power(self):
-        """
-        Get the current power draw of the GPU in watts.
-
-        Returns:
-        -----------
-
-            str: Current power draw of the GPU in Watts.
-        """
-        # power.draw
-        power = (
-            subprocess.run(
-                "nvidia-smi  --query-gpu=power.draw  --format=csv,noheader",
-                shell=True,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            .stdout.replace("W", "")
-            .strip()
-        )
-        return round(float(power))
-
-    @property
-    def core_usage(self):
-        """
-        Get the current GPU utilization as a percentage.
-
-        Returns:
-        -----------
-
-            str: Current GPU utilization in percentage.
-        """
-        return (
-            subprocess.run(
-                "nvidia-smi  --query-gpu=utilization.gpu  --format=csv,noheader",
-                shell=True,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            .stdout.replace("%", "")
-            .strip()
-        )
-
-    def gpu_name(self, short=False):
-        """
-        Get the name of GPU.
-
-        Returns:
-        -----------
-
-            str : Name of GPU with optional argument to get short model name (last part)
-        """
+    def gpu_name(self, short=False) -> str:
+        """Get the name of GPU."""
         name_regex = re.compile(
             r"(AMD|NVIDIA|Intel)\s?(\s?GeForce\s?|\s?Radeon\s?)\s?(\sGTX\s?|\s?RTX\s?)(.*)"
         )
@@ -311,180 +111,26 @@ class GpuData:
         return self.name
 
     @property
-    def timestamp(self):
+    def timestamp(self) -> datetime.datetime:
+        """Return the current time as a formatted string.
+
+        Returns
+
+            str : Current time as formatted string
+
         """
-        Current timestamp.
+        return datetime.datetime.now()
 
-        Returns:
-        -----------
-
-            str : GPU timestamp in milliseconds since boot
-        """
-        return subprocess.run(
-            "nvidia-smi  --query-gpu=timestamp  --format=csv,noheader",
-            shell=True,
-            capture_output=True,
-            text=True,
-            check=False,
-        ).stdout.strip()
-
-    @property
-    def fan_speed(self):
-        """
-        Get the fan speed as a percentage of its maximum RPM rate.
-
-        Returns:
-        -----------
-             str   : Fan speed in percentage
-        """
-        fan_speed = subprocess.run(
-            "nvidia-smi --query-gpu=fan.speed --format=csv,noheader",
-            shell=True,
-            capture_output=True,
-            text=True,
-            check=False,
-        ).stdout.strip()
-        return fan_speed.replace("%", "").strip()
-
-    def csv(self, header=False, timestamp=False, units=False):
-        """
-        Returns the object properties as a CSV string.
-
-        Paramaters:
-        ---------
-            header (bool) : If True, include a header in the CSV output
-            timestamp (bool) : If True, include the timestamp in the CSV output. Defaults to True.
-
-        Returns:
-        --------
-            csv (str): CSV string of object properties
-        """
-        DATETIME_REGEX = re.compile(r"\d+(-|/)\d+(-|/)\d+\s\d+:\d+:\d+(\.\d+)?")
-        header_ = ""
-
-        unit_definitions = [" °C", " V", " MHz", " %", " W", " MHz", " %"]
-        template = f"{self.temp},{self.voltage},{self.core_clock},{self.core_usage},{self.power},{self.memory_clock},{self.memory_usage}"
-
-        if timestamp:
-            template = f"{self.timestamp},{template}"
-        if header:
-            if timestamp:
-                keys = [
-                    "Time",
-                    "Temp",
-                    "Voltage",
-                    "Core Clock",
-                    "Core Usage",
-                    "Power",
-                    "Memory Clock",
-                    "Memory Usage",
-                ]
-            else:
-                keys = [
-                    "Temp",
-                    "Voltage",
-                    "Core Clock",
-                    "Core Usage",
-                    "Power",
-                    "Memory Clock",
-                    "Memory Usage",
-                ]
-            header_ = ",".join(keys)
-            template = header_ + "\n" + template
-        # Append units to the end of each field
-        if units:
-            # The offset is used to account for the fact that we are adding units after each field
-            # rather than at the end of each field. Time allows us to skip the timestamp field when adding units.
-            offset = 0
-            # Ignore header when adding units
-            if header_:
-                values = template.replace(header_, "").lstrip().split(",")
-            else:
-                values = template.lstrip().split(",")
-            for i, value in enumerate(values):
-                try:
-                    if not DATETIME_REGEX.match(value):
-                        values[i] = f"{value}{unit_definitions[i - offset]}"
-                    else:
-                        # Dont assign a unit to the timestamp, so we subtract one from the unit index.
-                        offset = 1
-                except IndexError:
-                    pass
-            # Join back together with commas and add the header back in.
-            template = f'{header_}\n{", ".join(values)}' if header else ", ".join(values)
-        # Format the template with the data from this instance of the class
-        return template.format(
-            temp=self.temp,
-            voltage=self.voltage,
-            core_clock=self.core_clock,
-            core_usage=self.core_usage,
-            power=self.power,
-            memory_clock=self.memory_clock,
-            memory_usage=self.memory_usage,
-        )
-
-    def __str__(self):
-        """
-        Return string representation of GPU object.
-
-        Returns:
-        -----------
-             str   : String representation of GPU object.
-        """
-        return (
-            f"GPU: {self.name}\n"
-            f"Core Temp: {self.core_temp} °C\n"
-            f"Core Clock: {self.core_clock} MHz\n"
-            f"Memory Clock: {self.memory_clock} MHz\n"
-            f"Memory Usage: {self.memory_usage}    %\n"
-            f"Core Usage: {self.core_usage}    %\n"
-            f"Power: {self.power} W\n"
-            f"Voltage: {self.voltage} V\n"
-            f"Fan fan_speed {self.fan_speed}%\n"  # Added this line
-        ).strip()
-
-    def __call__(self):
-        """
-        Return dictionary representation of GPU object.
-
-        Returns:
-        -----------
-            dict : Dictionary representation of GPU object.
-        """
-        return self.__dict__
-
-    # def __repr__(self) -> str:
-    #     return (
-    #         f"GpuData(name={self.name!r}, core_temp={self.core_temp!r},"
-    #         f"core_clock={self.core_clock}, power={self.power},"
-    #         f"voltage={self.voltage}, fan_speed={self.fan_speed}"
-    #         f"memory_usage={self.memory_usage}, core_usage={self.core_usage}"
-    #         f"memory_clock={self.memory_clock}"
-    #     )
+    def dict(self) -> dict[str, int]:
+        """Return dictionary representation of GPU object."""
+        self.update()
+        return {k: v for k, v in vars(self).items() if k not in ["type", "name"]}
 
     def __repr__(self):
         """Return Class representation."""
-        return f"{self.__class__.__name__}({self.__dict__})"
-
-    # def __repr__(self) -> str:
-    #     return (
-    #          f'NotificationCommand(identifier={self.identifier!r}, title={self.title!r}, body={self.body!r},'
-    #        f'actions={self.actions!r}, done={self.done!r}, urgency={self.urgency})')
+        return f"{self.__class__.__name__}(temp={self.gpu_temp}, usage={self.core_usage}, voltage={self.gpu_voltage}"
 
 
 # Example
 if __name__ == "__main__":
     gpu = GpuData()
-    print(f"Full GPU Name: {gpu.gpu_name()}")
-    print(f"Short GPU Name: {gpu.gpu_name(short=True)}")
-    print(str(gpu))
-    print("\nBASIC")
-    print(gpu.csv())
-    print("\nHEADER")
-    print(gpu.csv(header=True))
-    print("\nHEADER, TIMESTAMP")
-    print(gpu.csv(header=True, timestamp=True))
-    print("\nUNITS")
-    print(gpu.csv(header=False, timestamp=False, units=True))
-    print("\nALL")
-    print(gpu.csv(header=True, timestamp=True, units=True))
