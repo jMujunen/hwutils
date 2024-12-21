@@ -1,7 +1,6 @@
-import datetime
 import re
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 digit_regex = re.compile(r"\d+\.?\d*")
 
@@ -12,66 +11,72 @@ class GpuData:
 
     Attributes
     ----------
-        type (str): Type of the device, always 'GPU'.
-        name (str): Name of the GPU.
+        gpu_core_temp : int
+            Current temperature of the GPU core.
+        gpu_core_clock : str
+            Current gpu core clock speed of the GPU in MHz.
+        gpu_memory_clock : int
+            Current gpu memory clock speed in MHz.
+        gpu_memory_usage : int
+            Current gpu memory usage as a percentage
 
-    Properties:
-    -----------
-        temp : str
-            Current temperature of the GPU core.
-        core_temp : str
-            Current temperature of the GPU core.
-        memory_temp : str
-            Current temperature of the GPU memory.
-        core_clock : str
-            Current graphics clock speed of the GPU in MHz.
-        max_core_clock : str
-            Maximum graphics clock speed of the GPU in MHz.
-        memory_clock : str
-            Current memory clock speed of the GPU in MHz.
-        max_memory_clock : str
-            Maximum memory clock speed of the GPU in MHz.
-        memory_usage : str
-            Current utilization of the GPU memory as a percentage.
-        voltage : float
-            Voltage of the GPU in volts.
-        power : int
+        gpu_power : int
             Current power draw of the GPU in Watts.
-        core_usage : str
-            Current utilization of the GPU cores as a percentage.
-        timestamp : str
-            The time when nvidia-smi was last run.
+        gpu_core_usage
+            Current gpu core usage as a percentage
+        gpu_voltage : float
+            Voltage of the GPU in volts.
+        gpu_fanspeed: int
+            Current Fan speed as a percentage
+        name: str
+            Gpu friendly name
+        type : str
+            Type of the device, always 'GPU'.
 
     Methods
-        gpu_name(short=False) -> str:
-            Return the name of the GPU. If short is True, return only model number.
-
+    -------
+        # TODO - Documentation for GPU.GpuData methods
     """
 
-    def __init__(self):
-        self.type = "GPU"
-        print(self.update())
+    gpu_core_temp: int = field(default_factory=int)
+    gpu_core_clock: int = field(default_factory=int)
+    gpu_memory_clock: int = field(default_factory=int)
+    gpu_memory_usage: int = field(default_factory=int)
+    gpu_power: int = field(default_factory=int)
+    gpu_core_usage: int = field(default_factory=int)
+    gpu_fanspeed: int = field(default_factory=int)
+    gpu_voltage: float = field(default_factory=float)
+    name: str = field(default_factory=str)
+    type: str = "GPU"
 
-    def update(self):
+    def __post_init__(self) -> None:
+        self.name = self._gpu_name()
+        self.update()
+
+    def update(self) -> "GpuData":
         """Update all properties."""
         cmd = "nvidia-smi --query-gpu=temperature.gpu,clocks.current.graphics,clocks.current.memory,utilization.memory,power.draw,utilization.gpu,fan.speed --format=csv,noheader"
         output = subprocess.getoutput(cmd).splitlines()
         output = [digit_regex.findall(line) for line in output]
         (
-            self.gpu_temp,
+            self.gpu_core_temp,
             self.gpu_core_clock,
             self.gpu_memory_clock,
-            self.memory_usage,
-            self.power,
-            self.core_usage,
-            self.fan_speed,
+            self.gpu_memory_usage,
+            self.gpu_power,
+            self.gpu_core_usage,
+            self.gpu_fanspeed,
         ) = (round(float(x)) for x in output[0])
-        self.gpu_voltage = self.voltage
-        self.__dict__.update({"voltage": float(self.voltage)})
-        return self.__dict__
+        self.gpu_voltage = round(self._voltage(), 2)
+        return self
 
-    @property
-    def voltage(self) -> float:
+    def dict(self) -> dict[str, int]:
+        """Return dictionary representation of GPU object."""
+        self.update()
+        return {k: v for k, v in vars(self).items() if k not in {"type", "name"}}
+
+    @staticmethod
+    def _voltage() -> float:
         """Get the voltage of the GPU in volts.
 
         Returns
@@ -91,7 +96,7 @@ class GpuData:
         volts = round(float(matches) / 1000, 2)
         return float(volts)
 
-    def gpu_name(self, short=False) -> str:
+    def _gpu_name(self, short=False) -> str:
         """Get the name of GPU."""
         name_regex = re.compile(
             r"(AMD|NVIDIA|Intel)\s?(\s?GeForce\s?|\s?Radeon\s?)\s?(\sGTX\s?|\s?RTX\s?)(.*)"
@@ -110,27 +115,8 @@ class GpuData:
             self.name = "  ".join(matches[0])
         return self.name
 
-    @property
-    def timestamp(self) -> datetime.datetime:
-        """Return the current time as a formatted string.
-
-        Returns
-
-            str : Current time as formatted string
-
-        """
-        return datetime.datetime.now()
-
-    def dict(self) -> dict[str, int]:
-        """Return dictionary representation of GPU object."""
-        self.update()
-        return {k: v for k, v in vars(self).items() if k not in ["type", "name"]}
-
-    def __repr__(self):
-        """Return Class representation."""
-        return f"{self.__class__.__name__}(temp={self.gpu_temp}, usage={self.core_usage}, voltage={self.gpu_voltage}"
-
 
 # Example
 if __name__ == "__main__":
     gpu = GpuData()
+    print(gpu)

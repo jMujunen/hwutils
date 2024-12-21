@@ -1,23 +1,55 @@
 """Contains the classes for sensor readings and system statistic."""
 
-from collections.abc import Callable
-from dataclasses import dataclass, field
+from collections.abc import Callable, Generator, Iterator
+from dataclasses import dataclass, field, fields
 from datetime import datetime
 from enum import Enum
 from random import randint
-from typing import Any
+from typing import Any, TypeAlias, TypeVar, Union
+
+from ThreadPoolHelper import Pool
+
+from hwutils import CpuData, GpuData, Interface
+from hwutils.SYS import Misc
+
+
+type Hwinfo = GpuData | CpuData | Interface | Misc
+pool = Pool()
 
 
 class SensorType(Enum):
-    TEMP = "C"
-    VOLTAGE = "V"
-    CLOCK_SPEED = "MHz"
-    PING = "ms"
+    """Enum for the type of a sensor."""
+
+    TEMP = ("C", 0)
+    VOLTAGE = ("V", 5)
+    CLOCK = ("MHz", 2)
+    PING = ("ms", 9)
+    USAGE = ("%", 1)
+    POWER = ("W", 4)
+    FAN = ("%", 11)
+
+    def __init__(self, unit: int, id: str) -> None:  # noqa: A002
+        """Initialize the enum with a unit and id."""
+        self.unit = unit
+        self.id = id
 
 
 @dataclass
 class SensorReading:
-    id: int = field(init=True, repr=True, default_factory=int)
+    """A class representing a sensor reading with its value, timestamp and type.
+
+    Attributes
+        id (str): The ID of the reading.
+        name (str): The name of the reading.
+        sensor_type (SensorType): The type of the reading.
+        value (float): The value of the reading.
+        timestamp (datetime): The timestamp of the reading.
+    """
+
+    # __slots__ = ["id", "name", "sensor_type", "timestamp", "value"]
+
+    id: str = field(init=True, repr=True, default_factory=str)
+    name: str = field(init=True, repr=True, default_factory=str)
     sensor_type: SensorType = field(
         init=True,
         repr=True,
@@ -25,15 +57,51 @@ class SensorReading:
     )
     value: float = field(init=True, repr=True, default_factory=float)
     timestamp: datetime = field(init=True, repr=True, default_factory=datetime.now)
-    func: Callable = field(init=True, repr=True, default_factory=lambda x: x)
+    func: Callable = field(init=True, repr=False, default_factory=lambda x: x)
 
-    def update(self):
-        self.value = self.func()  # Call the callable to get the current value
-        self.timestamp = datetime.now()
+    def __post_init__(self) -> "SensorReading":
+        """Post-initialization hook."""
+        self.value = self.func()
         return self
 
+    def update(self) -> float:
+        """Update the value and timestamp."""
+        self.value = self.func()
+        self.timestamp = datetime.now()
+        return self.value
+
     def __repr__(self) -> str:
-        return f"SensorReading({self.sensor_type}, {self.value} {self.sensor_type.value}) at {self.timestamp}"
+        """Return a string representation of the object."""
+        return f"SensorReading({self.name}, {self.value} {self.sensor_type.unit})"
+
+
+def create_sensor_readings_from_instance(instance: Hwinfo) -> list[SensorReading]:
+    """Create a list of SensorReading objects from an instance.
+
+    Args:
+        instance (Any): The instance to create SensorReading objects from.
+
+    Returns:
+        list[SensorReading]: A list of SensorReading objects.
+    """
+    readings = []
+    for f in fields(instance):
+        attr_value = getattr(instance, f.name)
+        if isinstance(attr_value, int | float):
+            sensor_type = f.name.upper()
+            for enum in SensorType:
+                if enum.name in sensor_type:
+                    sensor_type = enum
+                    break
+
+            reading = SensorReading(
+                id=instance.type,
+                name=f.name,
+                sensor_type=sensor_type,
+                func=lambda x=f: instance.dict().get(x.name),
+            )
+            readings.append(reading)
+    return readings
 
 
 @dataclass
@@ -41,18 +109,24 @@ class SensorGroup:
     """A group of sensor readings.
 
     Attributes
+        cls: GpuData | CpuData: The data source
         readings (list[SensorReading]): A list of SensorReading objects.
         group_id (int): The unique identifier for the sensor group.
         group_name (str): The name of the sensor group.
         group_description (str): A description of the sensor group.
     """
 
-    readings: list[SensorReading] = field(default_factory=list, init=False, repr=True)
-    group_id: int = field(init=True, repr=True, default_factory=int)
-    group_name: str = field(init=True, repr=True, default="")
-    group_description: str = ""
+    cls: Hwinfo
+    name: str = field(repr=True, init=False)
+    description: str = field(default_factory=str, kw_only=True, repr=True)
+    readings: list[SensorReading] = field(default_factory=list, repr=False, kw_only=True)
 
-    def add_reading(self, reading: SensorReading):
+    def __post_init__(self):
+        if not hasattr(self, "name"):
+            self.name = self.cls().__class__.__name__.upper()  # type: ignore
+            self.readings = list(create_sensor_readings_from_instance(self.cls()))  # type: ignore
+
+    def add_reading(self, reading: SensorReading) -> None:
         """Add a sensor reading to the group.
 
         Args:
@@ -60,82 +134,66 @@ class SensorGroup:
         """
         self.readings.append(reading)
 
-    def __init__(self, name: str, id: int):
-        """Initialize a new SensorGroup object.
+    def update(self):  # -> list:
+        """Update the sensor group and return a dictionary of readings."""
+        # if not hasattr(self, "name"):
+        # self.name = self.cls().__class__.__name__.upper()  # type: ignore
+        # self.readings = create_sensor_readings_from_instance(self.cls())  # type: ignore
+        updated_values = self.cls().dict()  # type: ignore
+        return {reading.name: updated_values[reading.name] for reading in self}
 
-        Args:
-            name (str): The name of the sensor group.
-            id (int): The unique identifier for the sensor group.
-        """
-        self.group_id = id
-        self.group_name = name
-        self.readings = []
+    def __iter__(self) -> Iterator:
+        """Iterate over the sensor group's readings."""
+        yield from self.readings
 
-    def __str__(self):
-        """Return a string representation of the SensorGroup object.
+    def __getitem__(self, index, /):
+        """Get a specific sensor reading by index."""
+        return self.readings[index]
 
-        Returns
-            str: A string representing the SensorGroup object.
-        """
-        return f"{self.group_name} ({self.group_id}): {[str(reading) for reading in self.readings]}"
+    def __len__(self) -> int:
+        return len(list(self.__iter__()))
 
 
 @dataclass
-class SystemStats:
-    CPU: SensorGroup = field(default_factory=lambda: SensorGroup("CPU", 1))  # CPU sensor group
-    GPU: SensorGroup = field(default_factory=lambda: SensorGroup("GPU", 2))  # GPU sensor group
-    MISC: SensorGroup = field(default_factory=lambda: SensorGroup("MISC", 3))  # Misc sensor group
-    cpu_temp: SensorReading | None = None
-    cpu_voltage: SensorReading | None = None
-    gpu_memory_clock: SensorReading | None = None
-    ping: SensorReading | None = None
+class SystemStats(tuple):
+    """A class to represent a collection of sensor groups and miscellaneous readings.
 
-    def update(self) -> int:
+    Attributes
+        CPU (SensorGroup): A sensor group representing CPU data.
+        GPU (SensorGroup): A sensor group representing GPU data.
+        MISC (SensorGroup): A sensor group for miscellaneous readings.
+        ping (SensorReading | None): An optional sensor reading for network latency.
+    """
+
+    CPU: SensorGroup = field(default_factory=lambda: SensorGroup(CpuData, description="Cpu Stats"))
+    GPU: SensorGroup = field(default_factory=lambda: SensorGroup(GpuData, description="Gpu Stats"))
+    MISC: SensorGroup = field(
+        default_factory=lambda: SensorGroup(Misc, description="Miscellaneous stats")
+    )
+    _pool = Pool()
+
+    def update(self):  # -> None:
         """Update the system stats with current readings."""
-        for group in [self.CPU.readings, self.GPU.readings, self.MISC.readings]:
-            for reading in group:
-                if isinstance(reading, SensorReading):
-                    print(reading.update())
-        return 0
+        return tuple(self._pool.execute(lambda x: x.update(), self, progress_bar=False))
+        # yield result
 
+    def __iter__(self) -> Iterator:
+        """Iterate over the system stats' sensor groups."""
+        for v in self.__dict__.values():
+            if v:
+                yield v
 
-class Sensor:
-    """Base class for all hardware objects."""
+    def __str__(self) -> str:
+        """Return a string representation of the system stats."""
+        return "\n".join([str(sensor_group) for sensor_group in self])
 
-    def __init__(self, sensor_type: str) -> None:
-        """Construct the object."""
-        self.sensor_type = sensor_type
+    def __len__(self) -> int:
+        """Return the number of sensor groups in the system stats."""
+        return len(list(self.__iter__()))
 
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.__dict__})"
+    def __getitem__(self, index, /):
+        """Get a specific sensor group by index."""
+        return list(self.__iter__())[index]
 
-
-if __name__ == "__main__":
-    from .CPU import CpuData
-    from .GPU import GpuData
-
-    gpudata = GpuData()
-    cpudata = CpuData()
-    system_stats = SystemStats()
-
-    cpu_group = SensorGroup(name="CPU", id=1)
-    cpu_group.add_reading(
-        SensorReading(id=1, sensor_type=SensorType.TEMP, func=lambda: cpudata.average_temp)
-    )
-    cpu_group.add_reading(
-        SensorReading(id=2, sensor_type=SensorType.CLOCK_SPEED, func=lambda: cpudata.average_clock)
-    )
-
-    gpu_group = SensorGroup("GPU", 2)
-    gpu_group.add_reading(
-        SensorReading(
-            id=2,
-            sensor_type=SensorType.CLOCK_SPEED,
-            func=lambda: gpudata.update().get("memory_clock"),
-        )
-    )
-    gpu_group.add_reading(
-        SensorReading(
-            id=1, sensor_type=SensorType.TEMP, func=lambda: gpudata.update().get("core_temp")
-        )
-    )
+    def dict(self) -> dict:
+        return {k: v for group in self.update() for k, v in group.items()}

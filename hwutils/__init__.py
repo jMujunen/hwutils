@@ -1,26 +1,21 @@
 """__init__.py - Initializes the hwutils package."""
 
-from .CPU import CpuData
-from .DISK import Disk
-from .FAN import Fan
-from .GPU import GpuData
-from .NET import Interface
+from .CPU import CpuData as CpuData
+from .DISK import Disk as Disk
+from .FAN import Fan as Fan
+from .GPU import GpuData as GpuData
+from .NET import Interface as Interface
 
 # from .PROC import Proc
-from .Sensor import Sensor, SensorReading, SystemStats
-from .SYS import Misc, Ram, Temp
+from .Sensor import SensorReading, SystemStats
 
 __all__ = [
-    "GpuData",
     "CpuData",
-    "Fan",
-    "Ram",
-    "Misc",
-    "Interface",
     "Disk",
-    "Temp",
+    "Fan",
+    "GpuData",
+    "Interface",
     # "Proc",
-    "Sensor",
     "SensorReading",
     "SystemStats",
 ]

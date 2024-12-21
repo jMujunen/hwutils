@@ -1,24 +1,20 @@
 import re
 import subprocess
+from dataclasses import dataclass, field
 
 import psutil
 
-from .Sensor import Sensor
+temp_regex = re.compile(r"(\d{2})")
 
 
-class Temp(Sensor):
-    """Class for handling temperature sensor data."""
+@dataclass
+class Temp:
+    """Dataclass for temperature sensor data."""
 
-    def __init__(self):
-        """Initialize the temperature sensor data."""
-        self.type = "SYS"
-        # Precompile the regex pattern to match two consecutive digits which represent the temperature
-        self.temp_regex = re.compile(r"(\d{2})")
-        self.name = "Sys"
-        super().__init__("hw")
+    type: str = "SYS"
+    temp: int = field(default_factory=int)
 
-    @property
-    def temp(self):
+    def update(self) -> int:
         """Get the temperature data from the sensors using a subprocess."""
 
         command_output = subprocess.run(
@@ -28,14 +24,10 @@ class Temp(Sensor):
             text=True,
             check=False,
         ).stdout.strip()
+        self.temp = int(temp_regex.search(command_output).group())  # type: ignore
 
         # Extract the first matching temperature value
-        temperature_match = self.temp_regex.search(command_output)
-        if temperature_match:
-            return int(temperature_match.group())
-
-        # If no temperature is matched, return a default or error value
-        return "Error: Temperature not found"
+        return self.temp
 
     def __str__(self):
         """Return a string representation of the temperature data."""
@@ -52,55 +44,48 @@ class Temp(Sensor):
         return {"sys_temp": int(self.temp)}
 
 
-class Ram(Sensor):
-    def __init__(self):
-        super().__init__("hw")
+@dataclass
+class Misc:
+    ram_usage: int = field(default_factory=int)
+    sys_temp: int = field(default_factory=int)
+    ping: float = field(default_factory=float)
+    type: str = "SYS"
 
-    def info(self):
-        return psutil.virtual_memory()
+    def update(self) -> "Misc":
+        command_output = subprocess.run(
+            "sensors | grep 'Sensor 2' | awk  '{print $3}'",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout.strip()
 
-    @property
-    def percent_used(self) -> int:
-        return int(psutil.virtual_memory().percent)
+        result = subprocess.getoutput(
+            'ping -c 1 -W 1.5 1.1.1.1 | sed -u "s/^.*time=//g; s/ ms//g; s/^PING.*//g; s/^---.*//g; s/^.*packets.*//g; s/^rtt.*//g"',
+        ).strip()
+        try:
+            self.ping = round(float(result), 2)
+        except ValueError:
+            self.ping = -1.0
 
-    @property
-    def available(self) -> int:
-        return int(psutil.virtual_memory().available)
+        self.sys_temp = int(temp_regex.search(command_output).group())  # type: ignore
+        self.ram_usage = int(psutil.virtual_memory().percent)
 
-    @property
-    def used(self) -> int:
-        return int(psutil.virtual_memory().used)
+        return self
 
-    @property
-    def total(self) -> int:
-        return int(psutil.virtual_memory().total)
+    def dict(self) -> dict[str, float | int]:
+        self.update()
+        return {"ram_usage": self.ram_usage, "sys_temp": self.sys_temp, "ping": self.ping}
 
-    def __str__(self) -> str:
-        return f"Ram: {self.percent_used}%"
-
-    def dict(self) -> dict[str, int]:
-        return {"ram_usage": self.percent_used}
-
-
-class Misc(Sensor):
-    def __init__(self):
-        super().__init__("hw")
-
-    def get_uptime(self):
-        # Get the uptime data from the sensors using a subprocess
+    @staticmethod
+    def uptime():
         command_output = subprocess.run(
             "uptime -p", shell=True, capture_output=True, text=True, check=False
         ).stdout.strip()
+        return re.search(r"(\d+\s+\w+.*)+", command_output).group()  # type: ignore
 
-        # Extract the first matching uptime value
-        uptime_match = re.search(r"(\d+\s+\w+.*)+", command_output)
-        if uptime_match:
-            return uptime_match.group()
-
-        # If no uptime is matched, return a default or error value
-        return "Error: Uptime not found"
-
-    def users(self):
+    @staticmethod
+    def users() -> list[tuple]:
         users = psutil.users()
         names = []
         terminals = []
@@ -108,16 +93,3 @@ class Misc(Sensor):
             names.append(user.name)
             terminals.append(user.terminal)
         return list(zip(names, terminals, strict=False))
-
-
-# Example usage
-if __name__ == "__main__":
-    temp = Temp()
-    # Output: Current temperature: `TEMP` [25.0°C]
-    print(str(temp))
-    print(int(temp))
-    print("\n\n")
-    print(Misc().get_uptime())
-    print(Misc().users())
-    print("\n\n")
-    print(Ram())
