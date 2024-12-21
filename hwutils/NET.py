@@ -1,96 +1,124 @@
-#!/usr/bin/env python3
-
-# Network.py - Query network information for HWINFO
+"""Query network information."""
 
 import subprocess
+from dataclasses import dataclass, field
 
 import psutil
 
 
-class Interface:
-    def __init__(self, interface="wlan0"):
-        self.interface = interface
+@dataclass
+class Connections:
+    num_conns: int = field(default_factory=int, init=False)
+    listening: list = field(
+        init=False,
+        repr=False,
+        default_factory=lambda: list(
+            filter(lambda x: x.status == "LISTEN", psutil.net_connections(kind="inet"))
+        ),
+    )
+    established: list = field(
+        init=False,
+        repr=False,
+        default_factory=lambda: list(
+            filter(lambda x: x.status == "ESTABLISHED", psutil.net_connections(kind="inet"))
+        ),
+    )
+    listening_ports: set = field(
+        init=False,
+        repr=False,
+        default_factory=lambda: ({
+            conn.laddr.port  # type:ignore
+            for conn in psutil.net_connections(kind="inet")
+            if conn.status == "LISTEN"
+        }),
+    )
 
-    def addresses(self):
+    def __post_init__(self):
+        self.num_conns = len(self.listening) + len(self.established)
+
+
+@dataclass
+class Interface:
+    interface: str = field(default="wlan0")
+    hosts: list[str] = field(default_factory=list[str])
+    online: bool = field(default_factory=bool, init=False)
+    ip: str = field(default="", init=False)
+    mac: str = field(default="", init=False)
+    num_conns: int = field(default_factory=int, init=False)
+    latency: float = field(default_factory=float, init=False)
+    type = "Net"
+
+    def __post_init__(self):
+        self.online = self.status()
+        self.ip, self.mac = self.addresses()[:2]
+        self.num_conns = self.connections().num_conns
+        self.latency = self.ping()
+
+    def addresses(self) -> tuple[str, str, str, str]:
+        """Retrieve network information for a specific interface.
+
+        Returns
+            Tuple containing the IP address, netmask, broadcast and MAC address of the specified interface.
+        """
+        netmask = ""
+        broadcast = ""
         for interface, values in psutil.net_if_addrs().items():
             if self.interface in interface:
-                ip = values[0].address
-                netmask = values[0].netmask
-                broadcast = values[0].broadcast
+                self.ip = values[0].address
+                netmask = values[0].netmask or ""
+                broadcast = values[0].broadcast or ""
                 for item in values:
                     if item.family == 17:
-                        mac = item.address
-        return (ip, netmask, broadcast, mac)
+                        # AF_PACKET is the family of socket addresses from packet sockets (e.g., those returned by socket.SOCK_PACKET)
+                        self.mac = item.address
+        return (self.ip, self.mac, netmask, broadcast)
 
-    def connections(self):
-        all_connections = psutil.net_connections(kind="inet")
-        listening_connections = []
+    def connections(self) -> Connections:
+        """Return interface connections."""
+        return Connections()
 
-        established_connections = []
-        outgoing_connections = []
-        other_connections = []
+    def io(self, human_readable=True) -> tuple | None:
+        """Return the accumulated IO for the interface.
 
-        for conn in all_connections:
-            # Filter remote addresses. Anything other than 127.0.0.1 is of note.
-            # Outgoing is being defined as anything facing the internet
-            # In reality, this could be incoming or outgoing
-            try:
-                if conn.raddr[0] != "127.0.0.1" and conn.laddr[0] != "127.0.0.1":
-                    conn.laddr[0].strip("::ffff:")
-                    conn.raddr[0].strip("::ffff:")
-                    outgoing_connections.append(conn)
-            except Exception:
-                pass
-            try:
-                if conn.status == "LISTEN":
-                    listening_connections.append(conn)
-                elif conn.status == "ESTABLISHED":
-                    established_connections.append(conn)
-                elif conn.status == "TIME_WAIT":
-                    pass
-                else:
-                    other_connections.append(conn)
-            except Exception:
-                pass
+        Parameters
+        -----------
+            human_readable (bool): Specify True to return a human readable format
+        """
+        from size import Size
 
-        return (
-            listening_connections,
-            established_connections,
-            outgoing_connections,
-            other_connections,
-        )
+        if self.interface not in psutil.net_io_counters(pernic=True):
+            raise ValueError(f"Interface {self.interface} does not exist.")
+        io_counters = psutil.net_io_counters()[:2]
+        return io_counters if not human_readable else tuple(map(Size, io_counters))
 
-    def byte_io(self, destination):
-        if self.interface not in psutil.net_connections(pernic=True):
-            return 1
-        bytes_sent = psutil.net_io_counters().bytes_sent
-        bytes_recv = psutil.net_io_counters().bytes_recv
-        if destination == "sent":
-            return bytes_sent
-        if destination == "recv":
-            return bytes_recv
-        return bytes_sent, bytes_recv
-
-    def ping(self, destination="1.1.1.1"):
-        ping = subprocess.run(
-            f'ping -c 1 {destination} | sed -u "s/^.*time=//g; s/ ms//g; s/^PING.*//g; s/^---.*//g; s/^.*packets.*//g; s/^rtt.*//g"',
-            shell=True,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if ping.stderr:
-            return ping.stderr.strip()
+    def ping(self, destination="1.1.1.1") -> float:
+        """Ping a destination and return the time taken."""
+        ping = subprocess.getoutput(
+            f'ping -c 1 -W 1.5 {destination} | sed -u "s/^.*time=//g; s/ ms//g; s/^PING.*//g; s/^---.*//g; s/^.*packets.*//g; s/^rtt.*//g"',
+        ).strip()
         try:
-            return round(float(ping.stdout.strip()))
+            self.latency = round(float(ping), 2)
         except ValueError:
-            return 0
+            self.latency = -1.0
+        return self.latency
 
-    @property
-    def online(self) -> str:
-        return "online" if psutil.net_if_stats()[self.interface].isup else "offline"
+    def status(self) -> bool:
+        """Get current status of the interface."""
+        self.online = psutil.net_if_stats().get(self.interface, "wlan0").isup  # type: ignore
+        return self.online
 
-    """
+    def neighbors(self) -> list[str]:
+        """Scan for hosts on the network."""
+        self.hosts = subprocess.getoutput(
+            r'nmap -T4 -sn 10.0.0.0/24 | grep -oP "\d{2}\.\d\.\d\.\d+"'
+        ).splitlines()
+        return self.hosts
+
+    def dict(self) -> dict[str, float]:
+        return {"ping": self.ping()}
+
+
+"""
     def port_info(self, verbose_level=0, host='10.0.0.1', entire_subnet=False):
         # Verbose levels:
         # 0 - Show which ports are open
@@ -116,139 +144,4 @@ class Interface:
                         version = nm[host][protocol][port]['version']
 
         return nm
-        """
-
-    @property
-    def hosts(self) -> None:
-        subprocess.run('nmap -T4 -sn 10.0.0.0/24 | grep "Nmap"', check=False)
-
-    def __str__(self):
-        return str(
-            f'Interface: {self.interface} : {self.online}\n\n'
-            f'Connections:\n'
-            f'Listening connections: {len(self.connections()[0])}\n'
-            f'Established connections: {len(self.connections()[1])}\n'
-            f'Outgoing connections: {len(self.connections()[2])}\n'
-            f'Other connections: {len(self.connections()[3])}\n\n'
-            f'Ping: {self.ping("1.1.1.1")} ms\n\n'
-            f'Addresses:\n'
-            f'  IP: {self.addresses()[0]}\n'
-            f'  Netmask: {self.addresses()[1]}\n'
-            f'  Broadcast: {self.addresses()[2]}\n'
-            f'  MAC: {self.addresses()[3]}'
-        )
-
-    # TODO: Add more
     """
-    for proc in psutil.process_iter(['pid', 'name', 'username']):
-        print(proc.info)
-    """
-
-    def dict(self) -> dict[str, float]:
-        """Return value of ping."""
-        return {"ping": float(self.ping())}
-
-
-# Example
-if __name__ == "__main__":
-    net = Interface()
-    print(net)
-
-    try:
-        listen_addr = []
-        listen_addr = [
-            [
-                k
-                for k in net.connections()[0]
-                if k.raddr[0] != "127.0.0.1" and k.laddr not in listen_addr
-            ],
-            [
-                k
-                for k in net.connections()[0]
-                if k.laddr[0] != "127.0.0.1" and k.laddr not in listen_addr
-            ],
-        ]
-    except Exception as e:
-        print(e)
-    try:
-        established_addr = []
-        established_addr = [
-            [
-                k
-                for k in net.connections()[1]
-                if k.raddr[0] != "127.0.0.1" and k.laddr not in established_addr
-            ],
-            [
-                k
-                for k in net.connections()[1]
-                if k.laddr[0] != "127.0.0.1" and k.laddr not in established_addr
-            ],
-        ]
-    except Exception as e:
-        print(e)
-
-    try:
-        outgoing_addr = []
-        outgoing_addr = [
-            [
-                k
-                for k in net.connections()[2]
-                if k.raddr[0] != "127.0.0.1" and k.laddr not in outgoing_addr
-            ],
-            [
-                k
-                for k in net.connections()[2]
-                if k.laddr[0] != "127.0.0.1" and k.laddr not in outgoing_addr
-            ],
-        ]
-
-    except Exception as e:
-        print(e)
-
-    raddr = []
-    for k in net.connections()[2]:
-        if k.raddr[0] not in raddr:
-            raddr.append(f"remote: {k.raddr[0]}")
-        if k.laddr[0] not in raddr:
-            raddr.append(f"local: {k.laddr[0]}")
-    import pprint
-
-    pprint.pprint(raddr)
-
-    for k in net.connections()[0]:
-        try:
-            if k.raddr[0] not in listen_addr:
-                listen_addr.append(f"remote: {k.raddr[0]}")
-            if k.laddr[0] not in listen_addr:
-                listen_addr.append(f"local: {k.laddr[0]}")
-        except Exception:
-            pass
-
-    for k in net.connections()[3]:
-        try:
-            if k.raddr[0] not in outgoing_addr:
-                outgoing_addr.append(f"remote: {k.raddr[0]}")
-            if k.laddr[0] not in outgoing_addr:
-                outgoing_addr.append(f"local: {k.laddr[0]}")
-        except Exception as e:
-            print(e, end=",")
-
-    import pprint
-
-    try:
-        for k in established_addr:
-            pprint.pprint(k)
-    except Exception as e:
-        print(e)
-    try:
-        for k in listen_addr:
-            pprint.pprint(k)
-    except Exception as e:
-        print(e)
-
-    try:
-        for k in outgoing_addr:
-            pprint.pprint(k)
-    except Exception as e:
-        print(e)
-        print(e)
