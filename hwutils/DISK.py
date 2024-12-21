@@ -1,16 +1,12 @@
-#!/usr/bin/env python3
 """Disk.py - Query disk information for HWINFO."""
 
 import psutil
 
-from .Sensor import Sensor
 
-
-class Disk(Sensor):
+class Disk:
     def __init__(self, mountpoint: str, friendly_name: str | None = None):
         self.mountpoint = mountpoint
         self.friendly_name = friendly_name
-        super().__init__("disk")
 
     def percent_used(self) -> float:
         return psutil.disk_usage(self.mountpoint).percent

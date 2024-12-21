@@ -1,12 +1,11 @@
 """Contains the classes for sensor readings and system statistic."""
 
-from collections.abc import Callable, Generator, Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field, fields
 from datetime import datetime
 from enum import Enum
 from random import randint
-from typing import Any, TypeAlias, TypeVar, Union
-
+from typing import Any
 from ThreadPoolHelper import Pool
 
 from hwutils import CpuData, GpuData, Interface
@@ -75,11 +74,11 @@ class SensorReading:
         return f"SensorReading({self.name}, {self.value} {self.sensor_type.unit})"
 
 
-def create_sensor_readings_from_instance(instance: Hwinfo) -> list[SensorReading]:
+def generate_readings(instance: Hwinfo) -> list[SensorReading]:
     """Create a list of SensorReading objects from an instance.
 
     Args:
-        instance (Any): The instance to create SensorReading objects from.
+        instance (Hwinfo): The instance to create SensorReading objects from.
 
     Returns:
         list[SensorReading]: A list of SensorReading objects.
@@ -110,10 +109,9 @@ class SensorGroup:
 
     Attributes
         cls: GpuData | CpuData: The data source
+        name (str): The name of the sensor group.
+        description (str): A description of the sensor group.
         readings (list[SensorReading]): A list of SensorReading objects.
-        group_id (int): The unique identifier for the sensor group.
-        group_name (str): The name of the sensor group.
-        group_description (str): A description of the sensor group.
     """
 
     cls: Hwinfo
@@ -121,10 +119,10 @@ class SensorGroup:
     description: str = field(default_factory=str, kw_only=True, repr=True)
     readings: list[SensorReading] = field(default_factory=list, repr=False, kw_only=True)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not hasattr(self, "name"):
             self.name = self.cls().__class__.__name__.upper()  # type: ignore
-            self.readings = list(create_sensor_readings_from_instance(self.cls()))  # type: ignore
+            self.readings = list(generate_readings(self.cls()))  # type: ignore
 
     def add_reading(self, reading: SensorReading) -> None:
         """Add a sensor reading to the group.
@@ -134,7 +132,7 @@ class SensorGroup:
         """
         self.readings.append(reading)
 
-    def update(self):  # -> list:
+    def update(self) -> dict[str, Any]:
         """Update the sensor group and return a dictionary of readings."""
         # if not hasattr(self, "name"):
         # self.name = self.cls().__class__.__name__.upper()  # type: ignore
@@ -142,11 +140,11 @@ class SensorGroup:
         updated_values = self.cls().dict()  # type: ignore
         return {reading.name: updated_values[reading.name] for reading in self}
 
-    def __iter__(self) -> Iterator:
+    def __iter__(self) -> Iterator[SensorReading]:
         """Iterate over the sensor group's readings."""
         yield from self.readings
 
-    def __getitem__(self, index, /):
+    def __getitem__(self, index, /) -> SensorReading:
         """Get a specific sensor reading by index."""
         return self.readings[index]
 
@@ -172,7 +170,7 @@ class SystemStats(tuple):
     )
     _pool = Pool()
 
-    def update(self):  # -> None:
+    def update(self) -> tuple[dict, ...]:
         """Update the system stats with current readings."""
         return tuple(self._pool.execute(lambda x: x.update(), self, progress_bar=False))
         # yield result
@@ -195,5 +193,5 @@ class SystemStats(tuple):
         """Get a specific sensor group by index."""
         return list(self.__iter__())[index]
 
-    def dict(self) -> dict:
+    def dict(self) -> dict[str, int]:
         return {k: v for group in self.update() for k, v in group.items()}

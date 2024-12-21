@@ -8,4 +8,6 @@ dependencies = [
     "nvidia-ml-py==12.555.43 ; python_full_version >= '3.12' and python_full_version < '4.0'",
     "psutil-extra==0.2.0 ; python_full_version >= '3.12' and python_full_version < '4.0'",
     "psutil==6.0.0 ; python_full_version >= '3.12' and python_full_version < '4.0'",
+    "psutil>=6.0.0",
+    "pandas>=2.2.3",
 ]

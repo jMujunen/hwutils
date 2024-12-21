@@ -1,15 +1,8 @@
-#!/usr/bin/env python3
-
 import re
 import subprocess
 
-from .Sensor import Sensor
 
-# TODO:
-# * Add support for renaming xfans (fan1 becomes CPU fan)
-
-
-class Fan(Sensor):
+class Fan:
     """Class representing a single fan.
 
     Attributes
@@ -19,8 +12,8 @@ class Fan(Sensor):
 
     Methods
     --------
-        speed() -> int: The current speed of the fan in RPMs.
-        query_fans() -> str: The raw output of lm-sensors for this fan.
+        speed(): The current speed of the fan in RPMs.
+        query_fans(): The raw output of lm-sensors for this fan.
     """
 
     def __init__(self, fan_id: str, friendly_name: str | None = None):
@@ -59,10 +52,9 @@ class Fan(Sensor):
 
         self.fan_data_regex = r"^(fan\d+).*([0-9]{3,4})"
         # self.name = self.name
-        super().__init__("fan")
 
     @property
-    def type(self) -> str:
+    def _type(self) -> str:
         return self.name
 
     @property
@@ -75,9 +67,6 @@ class Fan(Sensor):
 
     def query_fans(self) -> dict:
         """Query the fan speed data from the sensors and return the fan data in a dictionary format.
-
-        Parameters
-            None
 
         Returns
             fan_data (dict): A dictionary containing the fan speed data
@@ -94,17 +83,6 @@ class Fan(Sensor):
         speed = matches[0][1]
         matches[0][0]
         return speed
-        """
-        # Return the dictionary if non-empty
-        if fan_data:
-            speed = fan_data[self.fan_name]
-            return speed
-
-        # If no fan speed is matched, return a default or error value
-        print("Error: Fan speeds are all 0")
-        return "Error: Fan speeds are all 0"
-        """
-        return None
 
     @property
     def speed(self) -> int:

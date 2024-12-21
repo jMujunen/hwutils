@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """__main__.py - Command-line interface for HWINFO."""
 
 import argparse
@@ -10,7 +9,9 @@ from .NET import Interface
 from .SYS import Ram, Temp
 
 
-def main() -> None:
+def parse_args():  # -> argparse.Namespace:
+    """Parse command-line arguments."""
+    # Main parser
     parser = argparse.ArgumentParser(description="Query hardware information.")
     subparsers = parser.add_subparsers(dest="command")
 
@@ -36,60 +37,36 @@ def main() -> None:
     net_parser.add_argument(
         "--interface", type=str, default="wlan0", help="Specify the network interface to query."
     )
-    # DEBUG:
 
     # Temperature command
     subparsers.add_parser("temp", help="Display temperature information.")
 
     # Parse arguments and execute commands
-    args = parser.parse_args()
+    return parser.parse_args()
 
+
+def main(args) -> str | None:
+    ret = None
     if hasattr(args, "command"):
         # hwdata_init()  # Ensure the package is initialized
-
-        if args.command == "cpu":
-            cpu = CpuData()
-            print(f"CPU Name: {cpu.name}")
-            print(f"Max Clock Speed: {cpu.max_clock} MHz")
-            print(f"Average Temperature: {cpu.average_temp}°C")
-
-        elif args.command == "gpu":
-            gpu = GpuData()
-            print(f"GPU Name: {gpu.name}")
-            print(f"Temperature: {gpu.temp}°C")
-
-        elif args.command == "disk":
-            disk = Disk(args.mountpoint)
-            print(f"{disk.friendly_name or args.mountpoint}: {disk.percent_used()}% used")
-
-        elif args.command == "ram":
-            ram = Ram()
-            print(f"Total RAM: {ram.total / (1024**3)} GB")
-            print(f"Available RAM: {ram.available / (1024**3)} GB")
-
-        elif args.command == "net":
-            net = Interface(args.interface)
-            print(f"Interface: {net.interface}")
-            print(f"Online Status: {net.online}")
-            if net.online == "online":
-                addresses = net.addresses()
-                for ip, netmask in addresses:
-                    print(f"IP Address: {ip}, Netmask: {netmask}")
-
-        elif args.command == "temp":
-            temp = Temp()
-            print("CPU Temperatures:")
-            for core, temperature in temp.cpu_temps().items():
-                print(f"Core {core}: {temperature}°C")
-            print("\nGPU Temperature:")
-            print(f"Temperature: {temp.gpu_temp()}°C")
-
-        else:
-            parser.print_help()
+        match args.command:
+            case "cpu":
+                ret = repr(CpuData())
+            case "gpu":
+                ret = repr(GpuData())
+            case "disk":
+                ret = repr(Disk(args.mountpoint))
+            case "ram" | "mem":
+                ret = repr(Ram())
+            case "net":
+                ret = repr(Interface(args.interface))
+            case _:
+                ret = None
     else:
-        parser.print_help()
+        ret = "Error parsing subparser: No attribute 'command'"
+    return ret
 
 
 if __name__ == "__main__":
-    main()
-t
+    args = parse_args()
+    print(main(args))
