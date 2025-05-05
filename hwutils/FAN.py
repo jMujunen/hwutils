@@ -7,11 +7,27 @@ class Fan:
 
     Attributes
     ----------
+        name: The name of the fan
+        fan_id: The id of the fan in lm-sensors output
+
+    Methods
+    --------
+        speed(): The current speed of the fan in RPMs.
+        query_fans(): The raw output of lm-sensors for this fan.
+
+    Attributes
         name (str): The name of the fan
         fan_id (str): The id of the fan in lm-sensors output
 
     Methods
-    --------
+        speed(): The current speed of the fan in RPMs.
+        query_fans(): The raw output of lm-sensors for this fan.
+
+    Attributes
+        name: The name of the fan
+        fan_id: The id of the fan in lm-sensors output
+
+    Methods
         speed(): The current speed of the fan in RPMs.
         query_fans(): The raw output of lm-sensors for this fan.
     """
@@ -28,18 +44,19 @@ class Fan:
                                  For example : Fan('fan1', 'CPU') represents
                                  fan1 in lm-sensors
 
-            fan1:            537 RPM  (min =    0 RPM)
-            fan2:            592 RPM  (min =    0 RPM)
-            fan3:            576 RPM  (min =    0 RPM)
-            fan4:            566 RPM  (min =    0 RPM)
-            fan5:            580 RPM  (min =    0 RPM)
-            fan6:            579 RPM  (min =    0 RPM)
-            fan7:              0 RPM  (min =    0 RPM)
-            fan8:              0 RPM  (min =    0 RPM)
-            fan9:              0 RPM  (min =    0 RPM)
-            fan10:             0 RPM  (min =    0 RPM)
-            cpu:               0 RPM  (min =    0 RPM)
-
+        ```
+        fan1:            537 RPM  (min =    0 RPM)
+        fan2:            592 RPM  (min =    0 RPM)
+        fan3:            576 RPM  (min =    0 RPM)
+        fan4:            566 RPM  (min =    0 RPM)
+        fan5:            580 RPM  (min =    0 RPM)
+        fan6:            579 RPM  (min =    0 RPM)
+        fan7:              0 RPM  (min =    0 RPM)
+        fan8:              0 RPM  (min =    0 RPM)
+        fan9:              0 RPM  (min =    0 RPM)
+        fan10:             0 RPM  (min =    0 RPM)
+        cpu:               0 RPM  (min =    0 RPM)
+        ```
 
 
         """

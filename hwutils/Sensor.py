@@ -108,10 +108,15 @@ class SensorGroup:
     """A group of sensor readings.
 
     Attributes
-        cls: GpuData | CpuData: The data source
-        name (str): The name of the sensor group.
-        description (str): A description of the sensor group.
-        readings (list[SensorReading]): A list of SensorReading objects.
+    ---------
+        cls : GpuData | CpuData
+            The data source
+        name :  str
+            The name of the sensor group.
+        description : str
+            A description of the sensor group.
+        readings : list[SensorReading]
+            A list of SensorReading objects.
     """
 
     cls: Hwinfo
@@ -134,10 +139,7 @@ class SensorGroup:
 
     def update(self) -> dict[str, Any]:
         """Update the sensor group and return a dictionary of readings."""
-        # if not hasattr(self, "name"):
-        # self.name = self.cls().__class__.__name__.upper()  # type: ignore
-        # self.readings = create_sensor_readings_from_instance(self.cls())  # type: ignore
-        updated_values = self.cls().dict()  # type: ignore
+        updated_values = self.cls().dict()
         return {reading.name: updated_values[reading.name] for reading in self}
 
     def __iter__(self) -> Iterator[SensorReading]:

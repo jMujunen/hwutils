@@ -15,22 +15,20 @@ digit_regex = re.compile(r"\d+\.?\d*")
 class CpuData:
     """A class for querying CPU data.
 
-
-    | Attributes           | Description                                        |
-    |:--------------------|:--------------------------------------------------- |
-    | cpu_max_temp  (int) | The maximum value of all the cores                  |
-    | cpu_avg_temp (int)  | Current temperature of the CPU core.                |
-    | cpu_max_clock (int) | The maximum value of all cores clock speed.         |
-    | cpu_voltage (float) | Current voltage of the CPU core in Volts.           |
-    | cpu_avg_clock (int) | Current gpu memory clock speed in MHz.              |
-    | type (str)          | Type of the device, always 'CPU'.                   |
-
+    Values
+    -----------
+        cpu_max_temp  (int): The maximum value of all the cores
+        cpu_avg_temp (int): Current temperature of the CPU core.
+        cpu_max_clock (int): The maximum value of all cores clock speed.
+        cpu_voltage (float): Current voltage of the CPU core in Volts.
+        cpu_avg_clock (int): Current gpu memory clock speed in MHz.
+        type (str): Type of the device, always 'CPU'.
 
 
-    | Method              | Description                                         |
-    |:--------------------|:--------------------------------------------------- |
-    | update() -> CpuData | Read values from /proc/cpuinfo and parse accordingly. |
-    | dict() -> dict[str, float| int] | Return a dictionary containing all the information. |
+     Methods
+     -------
+        update() (CpuData) : Read values from /proc/cpuinfo and parse accordingly.
+        dict() (dict[str, float| int]): Return a dictionary containing all the information.
 
     """
 

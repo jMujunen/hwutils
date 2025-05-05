@@ -35,7 +35,15 @@ class GpuData:
 
     Methods
     -------
-        # TODO - Documentation for GPU.GpuData methods
+       update : GpuData
+            Update all properties.
+       dict : dict[str, int]
+            Return dictionary representation of GPU object.
+       _gpu_name : str
+            Get the name of the GPU.
+       _voltage : float
+            Get the voltage of the GPU in volts.
+
     """
 
     gpu_core_temp: int = field(default_factory=int)
@@ -93,6 +101,8 @@ class GpuData:
             check=False,
         ).stdout.strip()
         matches = "  ".join(voltage_regex.findall(voltage_subprocess))
+        if not matches:
+            return 0.0
         volts = round(float(matches) / 1000, 2)
         return float(volts)
 
