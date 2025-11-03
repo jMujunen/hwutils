@@ -1,8 +1,8 @@
 import re
-from statistics import mean
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
+from statistics import mean
 
 clock_speed_regex = re.compile(r"(cpu MHz)\s+:\s+([\d.]+)")
 cpu_voltage_regex = re.compile(r"([^+]\d{1,3}\.\d{2,})")
@@ -32,11 +32,11 @@ class CpuData:
 
     """
 
-    cpu_voltage: float = field(default_factory=float)
-    cpu_avg_clock: int = field(default_factory=int)
-    cpu_avg_temp: int = field(default_factory=int)
-    cpu_max_clock: int = field(default_factory=int)
-    cpu_max_temp: int = field(default_factory=int)
+    cpu_voltage: float | None = None
+    cpu_avg_temp: int | None = None
+    cpu_avg_clock: int | None = None
+    cpu_max_clock: int | None = None
+    cpu_max_temp: int | None = None
 
     def __post_init__(self):
         """Update upon initialization."""
@@ -53,7 +53,9 @@ class CpuData:
         # Extract clock speeds from /proc/cpuinfo
         content = Path("/proc/cpuinfo").read_text(encoding="utf-8").splitlines()
         raw_data = [tuple(line.split(":")) for line in content if ":" in line]
-        clocks = [round(float(value.strip())) for key, value in raw_data if "cpu MHz" in key]
+        clocks = [
+            round(float(value.strip())) for key, value in raw_data if "cpu MHz" in key
+        ]
 
         # Extract temperatures from sensors
         sensors = subprocess.check_output("sensors").decode().split("\n")
